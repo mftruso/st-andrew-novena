@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1"
+    android:background="@color/colorParchment">
+
+
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorReadTheRed"
+        android:theme="?attr/actionBarTheme"
+        android:minHeight="?attr/actionBarSize"
+        android:elevation="4dp"
+        android:id="@+id/standrew_toolbar"
+        app:titleTextColor="@android:color/white"
+        app:title="@string/app_name" />
+
+    <TextView
+        android:text="##"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/dailyPrayerCountHolder"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        android:textAlignment="center" />
+
+    <TextView
+        android:text="@string/novena_prayer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView"
+        android:layout_weight="0.06"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:fontFamily="sans-serif" />
+
+    <Button
+        android:text="@string/amen_action"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/amenButton"
+        android:layout_weight="0.09"
+        android:onClick="incrementDailyPrayerCount"
+        android:textColor="@android:color/white"
+        android:backgroundTint="@color/colorReadTheRed" />
+
+    <TextView
+        android:text="@string/novena_instructions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView3"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+        android:textStyle="normal|italic"
+        android:textColor="@color/colorReadTheRed"
+        android:layout_marginTop="4dp" />
+
+
+</LinearLayout>

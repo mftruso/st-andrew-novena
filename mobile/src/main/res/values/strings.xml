@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">St. Andrew Novena</string>
+    <string name="novena_prayer">
+                Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary,
+                at midnight, in Bethlehem, in piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desires,
+                through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.
+    </string>
+    <string name="amen_action">Amen</string>
+    <string name="daily_prayer_count">DAILY_PRAYER_COUNT</string>
+    <string name="novena_instructions">Pray this novena 15 times daily between the feast of St. Andrew on November 30 until Christmas.</string>
+</resources>
