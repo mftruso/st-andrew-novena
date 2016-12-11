@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private Calendar readLastReset(){
         SharedPreferences sharedPref = getSharedPreferences(MY_PREFERENCES, Context.MODE_PRIVATE);
-        long lastResetTime = sharedPref.getLong(RESET_KEY, Calendar.getInstance().getTimeInMillis());
+        long lastResetTime = sharedPref.getLong(RESET_KEY, lookupYesterday().getTimeInMillis());
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(lastResetTime);
         return cal;
@@ -110,6 +110,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return needsReset;
+    }
+
+    private Calendar lookupYesterday(){
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        return cal;
     }
 
     //TODO: Notification modes: NONE, DEFAULT, CUSTOM
