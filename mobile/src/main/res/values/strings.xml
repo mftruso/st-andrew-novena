@@ -8,4 +8,8 @@
     <string name="amen_action">Amen</string>
     <string name="daily_prayer_count">DAILY_PRAYER_COUNT</string>
     <string name="novena_instructions">Pray this novena 15 times daily between the feast of St. Andrew on November 30 until Christmas.</string>
+    <string name="notification_settings">Notification Settings</string>
+    <string name="notification_settings_msg">Get periodic reminders from 7 a.m. to 7 p.m.</string>
+    <string name="start_time">Start Time</string>
+    <string name="end_time">End Time</string>
 </resources>

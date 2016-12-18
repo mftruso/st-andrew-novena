@@ -1,13 +1,16 @@
 package com.miketruso.standrewnovena;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-
 import java.util.Calendar;
 
 /**
@@ -23,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String MY_PREFERENCES = "STANDREWSHAREDPREFERENCES";
     private static final String COUNT_KEY = "dailyPrayerCount";
     private static final String RESET_KEY = "resetTime";
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +54,26 @@ public class MainActivity extends AppCompatActivity {
         updateCountInView();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_notify_settings:
+                Log.d(TAG, "go to notification settings");
+                Intent intent = new Intent(this, NotificationActivity.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
     public void incrementDailyPrayerCount(View view){
         int prayerCount = readDailyPrayerCount();
         prayerCount++;
@@ -63,8 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int readDailyPrayerCount(){
         SharedPreferences sharedPref = getSharedPreferences(MY_PREFERENCES, Context.MODE_PRIVATE);
-        int dailyPrayerCount = sharedPref.getInt(COUNT_KEY, 0);
-        return dailyPrayerCount;
+        return sharedPref.getInt(COUNT_KEY, 0);
     }
 
     private void setDailyPrayerCount(int prayerCount){
@@ -117,10 +140,5 @@ public class MainActivity extends AppCompatActivity {
         cal.add(Calendar.DATE, -1);
         return cal;
     }
-
-    //TODO: Notification modes: NONE, DEFAULT, CUSTOM
-    //TODO: Make notification on schedule
-
-
 }
 
