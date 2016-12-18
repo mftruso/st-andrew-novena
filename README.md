@@ -15,3 +15,4 @@ Pretty simple! Just like this prayer.
 
 - Tap the Amen button to increment the prayer count
 - Prayer count refreshes each day
+- Periodic reminders from 7 a.m. to 7 p.m.
