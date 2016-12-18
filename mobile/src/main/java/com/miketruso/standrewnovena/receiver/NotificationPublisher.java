@@ -1,4 +1,4 @@
-package com.miketruso.standrewnovena;
+package com.miketruso.standrewnovena.receiver;
 
 import android.app.Notification;
 import android.app.NotificationManager;

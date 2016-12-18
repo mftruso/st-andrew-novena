@@ -1,4 +1,4 @@
-package com.miketruso.standrewnovena;
+package com.miketruso.standrewnovena.activity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +11,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+
+import com.miketruso.standrewnovena.R;
+
 import java.util.Calendar;
 
 /**

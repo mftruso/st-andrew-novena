@@ -8,7 +8,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".MainActivity"
+        <activity android:name=".activity.MainActivity"
             android:label="StAndrewNovena">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -16,17 +16,26 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".NotificationActivity"
-            android:parentActivityName=".MainActivity" >
-
+        <activity android:name=".activity.NotificationActivity"
+            android:parentActivityName=".activity.MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity"/>
-
+                android:value=".activity.MainActivity"/>
         </activity>
 
-        <receiver android:name=".NotificationPublisher" />
+        <receiver android:name=".receiver.NotificationPublisher" />
+
+        <receiver android:name=".receiver.StartNotificationServiceAtBootReceiver"
+            android:enabled="true" android:exported="false"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name=".service.NotificationService" />
 
     </application>
+
 
 </manifest>
