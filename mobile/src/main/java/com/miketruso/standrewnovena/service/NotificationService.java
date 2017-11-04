@@ -94,7 +94,7 @@ public class NotificationService extends Service {
         Intent intent = new Intent(this, MainActivity.class);
         builder.setContentIntent(PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT));
         builder.setAutoCancel(true);
-        return builder.getNotification();
+        return builder.build();
     }
 
     private long calculateNotificationInterval(Calendar startTime, Calendar endTime){
