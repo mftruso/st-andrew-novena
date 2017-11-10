@@ -21,6 +21,7 @@ import java.util.Locale;
 public class NotificationService extends Service {
 
     private static final String TAG = "NotificationService";
+    static final long[] DEFAULT_VIBRATE_PATTERN = {0, 250, 250};
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -89,7 +90,7 @@ public class NotificationService extends Service {
         builder.setContentTitle("Pray the St. Andrew Novena");
         builder.setContentText(content);
         builder.setSmallIcon(R.drawable.ic_notifications_white_18dp);
-        builder.setVibrate(new long[] { 1000, 1000});
+        builder.setVibrate(DEFAULT_VIBRATE_PATTERN);
 
         Intent intent = new Intent(this, MainActivity.class);
         builder.setContentIntent(PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT));
