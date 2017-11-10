@@ -97,7 +97,7 @@ public class NotificationService extends Service {
         return builder.build();
     }
 
-    private long calculateNotificationInterval(Calendar startTime, Calendar endTime){
+    private static long calculateNotificationInterval(Calendar startTime, Calendar endTime){
         long timeSpanMilis = endTime.getTimeInMillis() - startTime.getTimeInMillis();
         long interval = timeSpanMilis/15;
         Log.d(TAG, "Time Interval: " + interval);

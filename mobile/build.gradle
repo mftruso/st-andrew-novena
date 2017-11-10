@@ -31,6 +31,9 @@ android {
             signingConfig signingConfigs.config
         }
     }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -40,6 +43,7 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:26.+'
     testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.10.19'
     compile 'com.android.support:multidex:1.0.1'
 }
 
