@@ -2,10 +2,14 @@ package com.miketruso.standrewnovena.service;
 
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -21,7 +25,9 @@ import java.util.Locale;
 public class NotificationService extends Service {
 
     private static final String TAG = "NotificationService";
+    private static final String NOTIFICATION_CHANNEL_ID = "st_andrew_notifications";
     static final long[] DEFAULT_VIBRATE_PATTERN = {0, 250, 250};
+    AlarmManager alarmManager;
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -32,16 +38,13 @@ public class NotificationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Start command received.");
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(intent.getLongExtra("NOTIFICATION_START_TIME", cal.getTimeInMillis()));
-        scheduleNotification(cal);
+        scheduleNotification();
         return START_NOT_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         alarmManager.cancel(assembleNotificationPendingIntent(getNotification("Oremus")));
         Log.d(TAG, "Existing alarms cancelled");
         Toast.makeText(this, "Notifications disabled", Toast.LENGTH_LONG).show();
@@ -50,30 +53,19 @@ public class NotificationService extends Service {
     /**
      * Default notification behavior: 7am to 7pm
      */
-    public void scheduleNotification(Calendar startTime){
+    public void scheduleNotification(){
         PendingIntent pendingIntent = assembleNotificationPendingIntent(getNotification("Oremus"));
 
-        Calendar endTime = Calendar.getInstance();
-        endTime.set(Calendar.HOUR_OF_DAY, startTime.get(Calendar.HOUR_OF_DAY));
-        endTime.set(Calendar.MINUTE, startTime.get(Calendar.MINUTE));
-        endTime.add(Calendar.HOUR, 12);
+        Calendar startTime = getStartTime();
+        Calendar endTime = getEndTime(startTime);
 
-        Log.d(TAG, "CurrentTime: " + Calendar.getInstance().getTime());
         Log.d(TAG, "StartTime: " + startTime.getTime());
         Log.d(TAG, "EndTime: " + endTime.getTime());
 
-        //check if current time is after end time
-        if(endTime.getTimeInMillis() < Calendar.getInstance().getTimeInMillis()){
-            startTime.add(Calendar.DAY_OF_YEAR, 1);
-            endTime.add(Calendar.DAY_OF_YEAR, 1);
-            Log.d(TAG, "Start Tomorrow at " + startTime.getTime());
-        }
-
-        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, startTime.getTimeInMillis(),
                 calculateNotificationInterval(startTime, endTime), pendingIntent);
-        String dateString = new SimpleDateFormat("E MMM dd HH:mm aa", Locale.getDefault()).format(startTime.getTime());
-        Toast.makeText(this, "Notifications scheduled to start at " + dateString, Toast.LENGTH_LONG).show();
+        displayStartTimeToast(startTime);
     }
 
     private PendingIntent assembleNotificationPendingIntent(Notification notification){
@@ -91,6 +83,10 @@ public class NotificationService extends Service {
         builder.setContentText(content);
         builder.setSmallIcon(R.drawable.ic_notifications_white_18dp);
         builder.setVibrate(DEFAULT_VIBRATE_PATTERN);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel();
+            builder.setChannelId(NOTIFICATION_CHANNEL_ID);
+        }
 
         Intent intent = new Intent(this, MainActivity.class);
         builder.setContentIntent(PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT));
@@ -98,11 +94,67 @@ public class NotificationService extends Service {
         return builder.build();
     }
 
+    private void createNotificationChannel() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            CharSequence name = getString(R.string.notification_channel_title);
+            String description = getString(R.string.notification_channel_description);
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel mChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance);
+            mChannel.setDescription(description);
+            mChannel.enableLights(true);
+            mChannel.enableVibration(true);
+            mChannel.setVibrationPattern(DEFAULT_VIBRATE_PATTERN);
+            mNotificationManager.createNotificationChannel(mChannel);
+        }
+    }
+
+    private static Calendar getStartTime() {
+        Calendar startTime = Calendar.getInstance();
+        startTime.setTimeInMillis(System.currentTimeMillis());
+        startTime.set(Calendar.HOUR_OF_DAY, 7);
+        startTime.set(Calendar.MINUTE,0);
+        return startTime;
+    }
+
+    private static Calendar getEndTime(Calendar startTime) {
+        Calendar endTime = Calendar.getInstance();
+        endTime.set(Calendar.HOUR_OF_DAY, startTime.get(Calendar.HOUR_OF_DAY));
+        endTime.set(Calendar.MINUTE, startTime.get(Calendar.MINUTE));
+        endTime.add(Calendar.HOUR, 12);
+        return endTime;
+    }
+
     private static long calculateNotificationInterval(Calendar startTime, Calendar endTime){
         long timeSpanMilis = endTime.getTimeInMillis() - startTime.getTimeInMillis();
         long interval = timeSpanMilis/15;
         Log.d(TAG, "Time Interval: " + interval);
         return interval;
+    }
+
+    private void displayStartTimeToast(Calendar startTime) {
+        if(isCurrentTimeAfterEndTime(startTime)){
+            startTime.add(Calendar.DAY_OF_YEAR, 1);
+            Log.d(TAG, "Start Tomorrow at " + startTime.getTime());
+        }
+        String dateString = new SimpleDateFormat("E MMM dd HH:mm aa", Locale.getDefault()).format(startTime.getTime());
+        Toast.makeText(this, "Notifications scheduled to start at " + dateString, Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * Check if the current time is after end time.
+     *
+     * @return boolean
+     */
+    private static boolean isCurrentTimeAfterEndTime(Calendar startTime) {
+        Calendar endTime = getEndTime(startTime);
+        Calendar currentTime = Calendar.getInstance();
+        Log.d(TAG, "CurrentTime: " + currentTime.getTime());
+        if(currentTime.getTimeInMillis() > endTime.getTimeInMillis()){
+            return true;
+        }
+        return false;
     }
 
 }

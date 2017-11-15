@@ -8,8 +8,6 @@ import android.util.Log;
 
 import com.miketruso.standrewnovena.service.NotificationService;
 
-import java.util.Calendar;
-
 public class StartNotificationServiceAtBootReceiver extends BroadcastReceiver {
 
     private static final String TAG = "StartNotifyServiceBoot";
@@ -24,13 +22,7 @@ public class StartNotificationServiceAtBootReceiver extends BroadcastReceiver {
         if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
             if(NOTIFY_DEFAULT.equals(getNotificationType(context))){
                 Log.d(TAG, "Restarting notification alarm.");
-                Calendar startTime = Calendar.getInstance();
-                startTime.setTimeInMillis(System.currentTimeMillis());
-                startTime.set(Calendar.HOUR_OF_DAY, 7);
-                startTime.set(Calendar.MINUTE,0);
-
                 Intent serviceIntent = new Intent(context, NotificationService.class);
-                serviceIntent.putExtra("NOTIFICATION_START_TIME", startTime.getTimeInMillis());
                 context.startService(serviceIntent);
             }
         }

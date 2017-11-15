@@ -13,8 +13,6 @@ import android.widget.Switch;
 import com.miketruso.standrewnovena.R;
 import com.miketruso.standrewnovena.service.NotificationService;
 
-import java.util.Calendar;
-
 
 public class NotificationActivity extends AppCompatActivity {
 
@@ -67,12 +65,7 @@ public class NotificationActivity extends AppCompatActivity {
 
     private void startNotifications(){
         setNotificationType(NOTIFY_DEFAULT);
-        Calendar startTime = Calendar.getInstance();
-        startTime.setTimeInMillis(System.currentTimeMillis());
-        startTime.set(Calendar.HOUR_OF_DAY, 7);
-        startTime.set(Calendar.MINUTE,0);
         Intent intent = new Intent(this, NotificationService.class);
-        intent.putExtra("NOTIFICATION_START_TIME", startTime.getTimeInMillis());
         startService(intent);
     }
 

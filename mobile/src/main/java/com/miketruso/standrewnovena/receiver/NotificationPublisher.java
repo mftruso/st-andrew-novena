@@ -39,15 +39,16 @@ public class NotificationPublisher extends BroadcastReceiver {
      */
     private boolean showNotification(Context context){
         boolean showNotification = true;
-
+        Calendar currentTime = Calendar.getInstance();
         Calendar endTime = Calendar.getInstance();
         endTime.setTimeInMillis(System.currentTimeMillis());
         endTime.set(Calendar.HOUR_OF_DAY, 19);
         endTime.set(Calendar.MINUTE, 0);
 
-        if(readDailyPrayerCount(context) >= 15 ||
-                Calendar.getInstance().getTimeInMillis() > endTime.getTimeInMillis()){
+        if(readDailyPrayerCount(context) >= 15
+                || currentTime.getTimeInMillis() > endTime.getTimeInMillis()){
             showNotification = false;
+            Log.d(TAG,"Current time: " + currentTime.getTime() + " End Time: " + endTime.getTime());
             Log.d(TAG, "No need to show the notification right now.");
         }
 
