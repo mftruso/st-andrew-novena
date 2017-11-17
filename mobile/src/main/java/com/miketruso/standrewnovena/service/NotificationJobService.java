@@ -50,7 +50,7 @@ public class NotificationJobService extends JobService {
 
     private Notification getNotification(String content) {
         Notification.Builder builder = new Notification.Builder(this);
-        builder.setContentTitle("Pray the St. Andrew Novena");
+        builder.setContentTitle(getString(R.string.notification_content_title));
         builder.setContentText(content);
         builder.setSmallIcon(R.drawable.ic_notifications_white_18dp);
         builder.setVibrate(DEFAULT_VIBRATE_PATTERN);

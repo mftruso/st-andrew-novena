@@ -12,6 +12,9 @@
     <string name="notification_settings_msg">Get periodic reminders from 7 a.m. to 7 p.m.</string>
     <string name="notification_channel_title">St. Andrew Novena Notifications</string>
     <string name="notification_channel_description">Pray the novena</string>
+    <string name="notification_content_title">Pray the St. Andrew Novena</string>
+    <string name="toast_notification_disabled">Notifications disabled</string>
+    <string name="toast_notification_start_time">Notifications scheduled to start at %1$s</string>
     <string name="start_time">Start Time</string>
     <string name="end_time">End Time</string>
     <string name="oremus">Oremus</string>

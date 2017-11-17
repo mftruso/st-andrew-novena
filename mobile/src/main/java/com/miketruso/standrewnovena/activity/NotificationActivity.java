@@ -100,7 +100,7 @@ public class NotificationActivity extends AppCompatActivity {
     private void stopNotifications(){
         setNotificationType(NOTIFY_NONE);
         dispatcher.cancel(JOB_TAG);
-        Toast.makeText(this, "Notifications disabled", Toast.LENGTH_LONG).show();    }
+        Toast.makeText(this, R.string.toast_notification_disabled, Toast.LENGTH_LONG).show();    }
 
     private static Calendar getStartTime() {
         Calendar startTime = Calendar.getInstance();
@@ -137,7 +137,8 @@ public class NotificationActivity extends AppCompatActivity {
             Log.d(TAG, "Start Tomorrow at " + startTime.getTime());
         }
         String dateString = new SimpleDateFormat("E MMM dd HH:mm aa", Locale.getDefault()).format(startTime.getTime());
-        Toast.makeText(this, "Notifications scheduled to start at " + dateString, Toast.LENGTH_LONG).show();
+        String text = getString(R.string.toast_notification_start_time, dateString);
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
     }
 
     /**
