@@ -23,8 +23,6 @@
                 android:value=".activity.MainActivity"/>
         </activity>
 
-        <receiver android:name=".receiver.NotificationPublisher" />
-
         <receiver android:name=".receiver.StartNotificationServiceAtBootReceiver"
             android:enabled="true" android:exported="false"
             android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
@@ -33,7 +31,13 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".service.NotificationService" />
+        <service
+            android:exported="false"
+            android:name=".service.NotificationJobService">
+            <intent-filter>
+                <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE"/>
+            </intent-filter>
+        </service>
 
     </application>
 

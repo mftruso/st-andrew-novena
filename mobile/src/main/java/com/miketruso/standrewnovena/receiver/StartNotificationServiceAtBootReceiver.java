@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.miketruso.standrewnovena.service.NotificationService;
-
 public class StartNotificationServiceAtBootReceiver extends BroadcastReceiver {
 
     private static final String TAG = "StartNotifyServiceBoot";
@@ -21,9 +19,8 @@ public class StartNotificationServiceAtBootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             if(NOTIFY_DEFAULT.equals(getNotificationType(context))){
-                Log.d(TAG, "Restarting notification alarm.");
-                Intent serviceIntent = new Intent(context, NotificationService.class);
-                context.startService(serviceIntent);
+                Log.d(TAG, "Restarting notification job.");
+                //TODO
             }
         }
     }

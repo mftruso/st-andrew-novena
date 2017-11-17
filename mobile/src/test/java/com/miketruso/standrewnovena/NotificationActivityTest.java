@@ -1,8 +1,6 @@
 package com.miketruso.standrewnovena;
 
-import android.util.Log;
-
-import com.miketruso.standrewnovena.service.NotificationService;
+import com.miketruso.standrewnovena.activity.NotificationActivity;
 
 import org.junit.Test;
 
@@ -12,7 +10,7 @@ import java.util.Calendar;
 
 import static org.junit.Assert.assertEquals;
 
-public class NotificationServiceTest {
+public class NotificationActivityTest {
 
     @Test
     public void calculateNotificationInterval_twelveHour() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
@@ -26,7 +24,7 @@ public class NotificationServiceTest {
         cArg[0] = Calendar.class;
         cArg[1] = Calendar.class;
 
-        Method method = NotificationService.class.getDeclaredMethod("calculateNotificationInterval", cArg);
+        Method method = NotificationActivity.class.getDeclaredMethod("calculateNotificationInterval", cArg);
         method.setAccessible(true);
         Object result = method.invoke(method, startTime, endTime);
         assertEquals(2880000l, result); //48 minutes
