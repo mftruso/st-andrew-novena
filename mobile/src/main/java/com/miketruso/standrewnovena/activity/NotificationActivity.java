@@ -150,9 +150,6 @@ public class NotificationActivity extends AppCompatActivity {
         Calendar endTime = getEndTime(startTime);
         Calendar currentTime = Calendar.getInstance();
         Log.d(TAG, "CurrentTime: " + currentTime.getTime());
-        if(currentTime.getTimeInMillis() > endTime.getTimeInMillis()){
-            return true;
-        }
-        return false;
+        return currentTime.getTimeInMillis() > endTime.getTimeInMillis();
     }
 }
