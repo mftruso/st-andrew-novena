@@ -19,7 +19,7 @@ public class StartNotificationServiceAtBootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             if(NOTIFY_DEFAULT.equals(getNotificationType(context))){
                 Log.d(TAG, "Restarting notification alarm.");
                 Intent serviceIntent = new Intent(context, NotificationService.class);
