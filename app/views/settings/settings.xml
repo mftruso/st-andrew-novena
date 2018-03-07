@@ -1,0 +1,10 @@
+<Page loaded="pageLoaded">
+  <ActionBar title="St. Andrew Novena" class="action-bar">
+    <NavigationButton text="Go Back" android.systemIcon="ic_menu_back" tap="onNavBtnTap"/>
+  </ActionBar>
+  <GridLayout columns="auto, *, auto" rows="auto, *">
+    <Label text="Notification Settings" col="0" />
+    <Label text="Get period reminders" row="1" col="0" />
+    <Switch checked="{{ notificationsEnabled }}" loaded="toggleNotifications" row="1" col="1" />
+  </GridLayout>
+</Page>

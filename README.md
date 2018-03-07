@@ -1,4 +1,4 @@
-# St. Andrew Novena Android App
+# St. Andrew Novena Mobile App
 
 A tradition in the Catholic Church is to pray the St. Andrew Novena prayer 15 times each day
 from the feast of St. Andrew on November 30 until Christmas.
@@ -16,3 +16,16 @@ Pretty simple! Just like this prayer.
 - Tap the Amen button to increment the prayer count
 - Prayer count refreshes each day
 - Periodic reminders from 7 a.m. to 7 p.m.
+
+## Development
+[Getting setup with NativeScript](https://docs.nativescript.org/tutorial/chapter-0)
+
+Run ios
+```
+tns run ios
+```
+
+Run android
+```
+tns run android
+```

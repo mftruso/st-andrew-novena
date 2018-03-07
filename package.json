@@ -1,0 +1,18 @@
+{
+  "description": "St. Andrew Novena Mobile App",
+  "license": "",
+  "readme": "St. Andrew Novena Mobile App",
+  "repository": "https://github.com/mftruso/st-andrew-novena",
+  "nativescript": {
+    "id": "com.miketruso.standrewnovena",
+    "tns-ios": {
+      "version": "3.4.1"
+    }
+  },
+  "dependencies": {
+    "nativescript-local-notifications": "^2.0.3",
+    "nativescript-theme-core": "~1.0.4",
+    "tns-core-modules": "~3.4.0"
+  },
+  "devDependencies": {}
+}

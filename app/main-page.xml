@@ -1,0 +1,14 @@
+<Page loaded="pageLoaded">
+  <ActionBar title="St. Andrew Novena" class="action-bar">
+    <ActionItem tap="settings"
+      ios.systemIcon="2" ios.position="right"
+      text="Notification Settings" android.position="popup"></ActionItem>
+  </ActionBar>
+  <!-- Your UI components go here -->
+  <StackLayout orientation="vertical">
+    <Label id="prayerCount" text="{{ prayerCount }}" />
+    <TextView text="{{ novenaPrayer }}" />
+    <Button text="Amen" tap="buttonTap" />
+    <TextView text="Pray this novena 15 times daily between the feast of St. Andrew on November 30 until Christmas." />
+  </StackLayout>
+</Page>
