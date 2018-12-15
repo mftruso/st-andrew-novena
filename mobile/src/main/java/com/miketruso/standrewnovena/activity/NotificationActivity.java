@@ -16,7 +16,9 @@ import com.firebase.jobdispatcher.Job;
 import com.firebase.jobdispatcher.Lifetime;
 import com.firebase.jobdispatcher.Trigger;
 import com.miketruso.standrewnovena.R;
+import com.miketruso.standrewnovena.StAndrewNovenaApplication;
 import com.miketruso.standrewnovena.service.NotificationJobService;
+import com.miketruso.standrewnovena.service.SharedPreferencesService;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -27,13 +29,13 @@ public class NotificationActivity extends AppCompatActivity {
 
     private static final String TAG = "NotificationActivity";
     private static final String NOTIFY_DEFAULT = "DEFAULT";
-    private static final String NOTIFY_NONE = "NONE";
-    private static final String MY_PREFERENCES = "STANDREWSHAREDPREFERENCES";
-    private static final String NOTIFY_KEY = "NOTIFICATION_TYPE";
     private static final String JOB_TAG = "st-andrew-notification-job";
 
-    FirebaseJobDispatcher dispatcher;
+    private SharedPreferencesService sharedPreferencesService = new SharedPreferencesService();
 
+    public static final String NOTIFY_NONE = "NONE";
+
+    FirebaseJobDispatcher dispatcher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +45,7 @@ public class NotificationActivity extends AppCompatActivity {
         dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
 
         Switch toggle = (Switch) findViewById(R.id.notifications_enabled_switch);
-        if(NOTIFY_DEFAULT.equals(getNotificationType())){
+        if(NOTIFY_DEFAULT.equals(sharedPreferencesService.getNotificationType())){
             toggle.setChecked(true);
         }
 
@@ -64,21 +66,8 @@ public class NotificationActivity extends AppCompatActivity {
         return true;
     }
 
-    private String getNotificationType(){
-        SharedPreferences sharedPref = getSharedPreferences(MY_PREFERENCES,Context.MODE_PRIVATE);
-        return sharedPref.getString(NOTIFY_KEY, NOTIFY_NONE);
-    }
-
-    private void setNotificationType(String notificationType){
-        Log.d(TAG, "setting notificationType to: " + notificationType);
-        SharedPreferences sharedPref = getSharedPreferences(MY_PREFERENCES,Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString(NOTIFY_KEY, notificationType);
-        editor.apply();
-    }
-
     private void startNotifications(){
-        setNotificationType(NOTIFY_DEFAULT);
+        sharedPreferencesService.setNotificationType(NOTIFY_DEFAULT);
 
         Calendar startTime = getStartTime();
         Calendar endTime = getEndTime(startTime);
@@ -98,7 +87,7 @@ public class NotificationActivity extends AppCompatActivity {
     }
 
     private void stopNotifications(){
-        setNotificationType(NOTIFY_NONE);
+        sharedPreferencesService.setNotificationType(NOTIFY_NONE);
         dispatcher.cancel(JOB_TAG);
         Toast.makeText(this, R.string.toast_notification_disabled, Toast.LENGTH_LONG).show();    }
 

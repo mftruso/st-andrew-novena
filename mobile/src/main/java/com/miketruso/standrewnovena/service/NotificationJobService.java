@@ -31,6 +31,8 @@ public class NotificationJobService extends JobService {
 
     NotificationManager notificationManager;
 
+    SharedPreferencesService sharedPreferencesService = new SharedPreferencesService();
+
     @Override
     public boolean onStartJob(JobParameters params) {
         Log.d(TAG, "NotificationJobService started");
@@ -93,7 +95,10 @@ public class NotificationJobService extends JobService {
         endTime.set(Calendar.HOUR_OF_DAY, 19);
         endTime.set(Calendar.MINUTE, 0);
 
-        if(readDailyPrayerCount(context) >= 15
+        if (sharedPreferencesService.needsReset()) {
+            sharedPreferencesService.setDailyPrayerCount(0);
+        }
+        if (readDailyPrayerCount(context) >= 15
                 || currentTime.getTimeInMillis() > endTime.getTimeInMillis()){
             showNotification = false;
             Log.d(TAG,"Current time: " + currentTime.getTime() + " End Time: " + endTime.getTime());
