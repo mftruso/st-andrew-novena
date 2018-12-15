@@ -16,9 +16,9 @@ import com.miketruso.standrewnovena.service.SharedPreferencesService;
 
 /**
  * +AMDG+
- *
+ * <p>
  * +JMJ+
- *
+ * <p>
  * Sanctus Andrea, ora pro nobis!
  */
 
@@ -36,16 +36,16 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         getSupportActionBar().setTitle(R.string.app_name);
 
-        if(sharedPreferencesService.needsReset()){
+        if (sharedPreferencesService.needsReset()) {
             setDailyPrayerCount(0);
         }
         updateCountInView();
     }
 
     @Override
-    protected void onRestart(){
+    protected void onRestart() {
         super.onRestart();
-        if(sharedPreferencesService.needsReset()){
+        if (sharedPreferencesService.needsReset()) {
             setDailyPrayerCount(0);
         }
         updateCountInView();
@@ -71,20 +71,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void incrementDailyPrayerCount(View view){
+    public void incrementDailyPrayerCount(View view) {
         int prayerCount = sharedPreferencesService.getDailyPrayerCount();
         prayerCount++;
         setDailyPrayerCount(prayerCount);
     }
 
-    private void setDailyPrayerCount(int prayerCount){
+    private void setDailyPrayerCount(int prayerCount) {
         sharedPreferencesService.setDailyPrayerCount(prayerCount);
         updateCountInView();
     }
 
-    public void updateCountInView(){
+    public void updateCountInView() {
         TextView textView = (TextView) findViewById(R.id.dailyPrayerCountHolder);
         textView.setText(String.valueOf(sharedPreferencesService.getDailyPrayerCount()));
     }
 }
-

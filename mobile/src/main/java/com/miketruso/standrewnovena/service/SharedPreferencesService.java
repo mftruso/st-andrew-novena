@@ -18,7 +18,7 @@ public class SharedPreferencesService {
 
     private SharedPreferences sharedPref = StAndrewNovenaApplication.getSharedPreferences();
 
-    public int getDailyPrayerCount(){
+    public int getDailyPrayerCount() {
         return sharedPref.getInt(COUNT_KEY, 0);
     }
 
@@ -34,7 +34,7 @@ public class SharedPreferencesService {
      *
      * @return boolean
      */
-    public boolean needsReset(){
+    public boolean needsReset() {
         boolean needsReset = false;
         Calendar lastReset = readLastReset();
         Calendar today = Calendar.getInstance();
@@ -47,11 +47,11 @@ public class SharedPreferencesService {
         return needsReset;
     }
 
-    public String getNotificationType(){
+    public String getNotificationType() {
         return sharedPref.getString(NOTIFY_KEY, NOTIFY_NONE);
     }
 
-    public void setNotificationType(String notificationType){
+    public void setNotificationType(String notificationType) {
         Log.d(TAG, "setting notificationType to: " + notificationType);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString(NOTIFY_KEY, notificationType);
@@ -60,16 +60,17 @@ public class SharedPreferencesService {
 
     /**
      * lookup when the daily count was last reset, default is today
+     *
      * @return Calendar
      */
-    private Calendar readLastReset(){
+    private Calendar readLastReset() {
         long lastResetTime = sharedPref.getLong(RESET_KEY, lookupYesterday().getTimeInMillis());
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(lastResetTime);
         return cal;
     }
 
-    private void setLastReset(Calendar cal){
+    private void setLastReset(Calendar cal) {
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putLong(RESET_KEY, cal.getTimeInMillis());
         editor.commit();

@@ -1,7 +1,5 @@
 package com.miketruso.standrewnovena.activity;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -16,7 +14,6 @@ import com.firebase.jobdispatcher.Job;
 import com.firebase.jobdispatcher.Lifetime;
 import com.firebase.jobdispatcher.Trigger;
 import com.miketruso.standrewnovena.R;
-import com.miketruso.standrewnovena.StAndrewNovenaApplication;
 import com.miketruso.standrewnovena.service.NotificationJobService;
 import com.miketruso.standrewnovena.service.SharedPreferencesService;
 
@@ -45,7 +42,7 @@ public class NotificationActivity extends AppCompatActivity {
         dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
 
         Switch toggle = (Switch) findViewById(R.id.notifications_enabled_switch);
-        if(NOTIFY_DEFAULT.equals(sharedPreferencesService.getNotificationType())){
+        if (NOTIFY_DEFAULT.equals(sharedPreferencesService.getNotificationType())) {
             toggle.setChecked(true);
         }
 
@@ -66,7 +63,7 @@ public class NotificationActivity extends AppCompatActivity {
         return true;
     }
 
-    private void startNotifications(){
+    private void startNotifications() {
         sharedPreferencesService.setNotificationType(NOTIFY_DEFAULT);
 
         Calendar startTime = getStartTime();
@@ -86,16 +83,17 @@ public class NotificationActivity extends AppCompatActivity {
         displayStartTimeToast(startTime);
     }
 
-    private void stopNotifications(){
+    private void stopNotifications() {
         sharedPreferencesService.setNotificationType(NOTIFY_NONE);
         dispatcher.cancel(JOB_TAG);
-        Toast.makeText(this, R.string.toast_notification_disabled, Toast.LENGTH_LONG).show();    }
+        Toast.makeText(this, R.string.toast_notification_disabled, Toast.LENGTH_LONG).show();
+    }
 
     private static Calendar getStartTime() {
         Calendar startTime = Calendar.getInstance();
         startTime.setTimeInMillis(System.currentTimeMillis());
         startTime.set(Calendar.HOUR_OF_DAY, 7);
-        startTime.set(Calendar.MINUTE,0);
+        startTime.set(Calendar.MINUTE, 0);
         return startTime;
     }
 
@@ -109,19 +107,20 @@ public class NotificationActivity extends AppCompatActivity {
 
     /**
      * Returns a time interval in milliseconds
+     *
      * @param startTime
      * @param endTime
      * @return
      */
-    private static long calculateNotificationInterval(Calendar startTime, Calendar endTime){
+    private static long calculateNotificationInterval(Calendar startTime, Calendar endTime) {
         long timeSpanMilis = endTime.getTimeInMillis() - startTime.getTimeInMillis();
-        long interval = timeSpanMilis/15;
+        long interval = timeSpanMilis / 15;
         Log.d(TAG, "Time Interval: " + interval);
         return interval;
     }
 
     private void displayStartTimeToast(Calendar startTime) {
-        if(isCurrentTimeAfterEndTime(startTime)){
+        if (isCurrentTimeAfterEndTime(startTime)) {
             startTime.add(Calendar.DAY_OF_YEAR, 1);
             Log.d(TAG, "Start Tomorrow at " + startTime.getTime());
         }

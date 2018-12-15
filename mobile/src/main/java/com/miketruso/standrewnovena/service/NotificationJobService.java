@@ -7,7 +7,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
@@ -22,8 +21,6 @@ import java.util.Calendar;
 public class NotificationJobService extends JobService {
 
     private static final String TAG = "NotificationJobService";
-    private static final String MY_PREFERENCES = "STANDREWSHAREDPREFERENCES";
-    private static final String COUNT_KEY = "dailyPrayerCount";
     private static final String NOTIFICATION_CHANNEL_ID = "st_andrew_notifications";
     public static final int NOTIFICATION_ID = 1;
 
@@ -38,7 +35,7 @@ public class NotificationJobService extends JobService {
         Log.d(TAG, "NotificationJobService started");
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notification = getNotification(getString(R.string.oremus));
-        if(showNotification(this)){
+        if (showNotification()) {
             notificationManager.notify(NOTIFICATION_ID, notification);
         }
         return false;
@@ -56,7 +53,7 @@ public class NotificationJobService extends JobService {
         builder.setContentText(content);
         builder.setSmallIcon(R.drawable.ic_notifications_white_18dp);
         builder.setVibrate(DEFAULT_VIBRATE_PATTERN);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
             builder.setChannelId(NOTIFICATION_CHANNEL_ID);
         }
@@ -68,7 +65,7 @@ public class NotificationJobService extends JobService {
     }
 
     private void createNotificationChannel() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = getString(R.string.notification_channel_title);
             String description = getString(R.string.notification_channel_description);
             int importance = NotificationManager.IMPORTANCE_HIGH;
@@ -84,10 +81,9 @@ public class NotificationJobService extends JobService {
     /**
      * Check if the user has completed 15 recitations of the prayer or if its after hours.
      *
-     * @param context
      * @return boolean
      */
-    private boolean showNotification(Context context){
+    private boolean showNotification() {
         boolean showNotification = true;
         Calendar currentTime = Calendar.getInstance();
         Calendar endTime = Calendar.getInstance();
@@ -98,21 +94,13 @@ public class NotificationJobService extends JobService {
         if (sharedPreferencesService.needsReset()) {
             sharedPreferencesService.setDailyPrayerCount(0);
         }
-        if (readDailyPrayerCount(context) >= 15
-                || currentTime.getTimeInMillis() > endTime.getTimeInMillis()){
+        if (sharedPreferencesService.getDailyPrayerCount() >= 15
+                || currentTime.getTimeInMillis() > endTime.getTimeInMillis()) {
             showNotification = false;
-            Log.d(TAG,"Current time: " + currentTime.getTime() + " End Time: " + endTime.getTime());
+            Log.d(TAG, "Current time: " + currentTime.getTime() + " End Time: " + endTime.getTime());
             Log.d(TAG, "No need to show the notification right now.");
         }
 
         return showNotification;
     }
-
-    private int readDailyPrayerCount(Context context){
-        SharedPreferences sharedPref = context.getSharedPreferences(MY_PREFERENCES, Context.MODE_PRIVATE);
-        int dailyPrayerCount = sharedPref.getInt(COUNT_KEY, 0);
-        Log.d(TAG, "Current prayer count: " + dailyPrayerCount);
-        return dailyPrayerCount;
-    }
-
 }
