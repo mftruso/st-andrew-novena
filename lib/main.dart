@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // +JMJ+
 // AMDG
 void main() => runApp(MyApp());
@@ -47,21 +48,36 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-  void _incrementCounter() {
+  Future _initializeCounter() async {
+    final prefs = await SharedPreferences.getInstance();
+    int counter = prefs.getInt('counter') ?? 0;
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _counter = counter;
     });
   }
 
-  void _resetCounter() {
+  Future _incrementCounter() async {
+    final prefs = await SharedPreferences.getInstance();
+    int counter = prefs.getInt('counter') ?? 0;
+    counter++;
+    prefs.setInt('counter', counter);
+    setState(() {
+      _counter = counter;
+    });
+  }
+
+  Future _resetCounter() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('counter', 0);
     setState(() {
       _counter = 0;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCounter();
   }
 
   @override
