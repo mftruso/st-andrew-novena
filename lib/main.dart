@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:st_andrew_novena_flutter/settingsPage.dart';
 // +JMJ+
 // AMDG
 void main() => runApp(MyApp());
@@ -98,10 +99,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 onSelected: (result) {
                   if(result == 'reset'){
                     _resetCounter();
+                  } else if (result == 'settings') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
+                    );
                   }
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry>[
                   const PopupMenuItem(child: Text('Reset'), value: 'reset',),
+                  const PopupMenuItem(child: Text('Settings'), value: 'settings',),
                   ]
 
             )
