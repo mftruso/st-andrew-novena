@@ -1,9 +1,19 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena_flutter/settingsPage.dart';
+
 // +JMJ+
 // AMDG
-void main() => runApp(MyApp());
+
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
+void main() async {
+  flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -79,6 +89,14 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _initializeCounter();
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('app_icon');
+    var initializationSettingsIOS = IOSInitializationSettings(
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+    var initializationSettings = InitializationSettings(
+        initializationSettingsAndroid, initializationSettingsIOS);
+    flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: onSelectNotification);
   }
 
   @override
@@ -91,13 +109,13 @@ class _MyHomePageState extends State<MyHomePage> {
     // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+          // Here we take the value from the MyHomePage object that was created by
+          // the App.build method, and use it to set our appbar title.
+          title: Text(widget.title),
           actions: <Widget>[
             PopupMenuButton(
                 onSelected: (result) {
-                  if(result == 'reset'){
+                  if (result == 'reset') {
                     _resetCounter();
                   } else if (result == 'settings') {
                     Navigator.push(
@@ -107,13 +125,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   }
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                  const PopupMenuItem(child: Text('Reset'), value: 'reset',),
-                  const PopupMenuItem(child: Text('Settings'), value: 'settings',),
-                  ]
-
-            )
-            ]
-      ),
+                      const PopupMenuItem(
+                        child: Text('Reset'),
+                        value: 'reset',
+                      ),
+                      const PopupMenuItem(
+                        child: Text('Settings'),
+                        value: 'settings',
+                      ),
+                    ])
+          ]),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
@@ -150,6 +171,44 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> onDidReceiveLocalNotification(
+      int id, String title, String body, String payload) async {
+    // display a dialog with the notification details, tap ok to go to another page
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: title != null ? Text(title) : null,
+        content: body != null ? Text(body) : null,
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            child: Text('Ok'),
+            onPressed: () async {
+              Navigator.of(context, rootNavigator: true).pop();
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MyApp(),
+                ),
+              );
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> onSelectNotification(String payload) async {
+    if (payload != null) {
+      debugPrint('notification payload: ' + payload);
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MyApp()),
     );
   }
 }
