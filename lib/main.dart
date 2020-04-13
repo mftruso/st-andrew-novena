@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena_flutter/settingsPage.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 // +JMJ+
 // AMDG
@@ -19,19 +21,15 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return MaterialApp(
       title: 'St. Andrew Novena',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
+          primarySwatch: Colors.red,
+          accentColor: Colors.red,
+          textTheme: GoogleFonts.montserratTextTheme(textTheme).copyWith(
+             body1: TextStyle(fontSize: 20)
+          )
       ),
       home: MyHomePage(title: 'St. Andrew Novena'),
     );
@@ -111,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text(widget.title),
+          title: Text(widget.title, style: GoogleFonts.montserrat()),
           actions: <Widget>[
             PopupMenuButton(
                 onSelected: (result) {
@@ -155,7 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
             // center the children vertically; the main axis here is the vertical
             // axis because Columns are vertical (the cross axis would be
             // horizontal).
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
               Text(
                 '$_counter',
@@ -163,10 +161,15 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Text(
                   'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire [name your intention], through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                  style: TextStyle(fontSize: 20)),
-              RaisedButton(
-                  onPressed: _incrementCounter,
-                  child: const Text('Amen', style: TextStyle(fontSize: 20)))
+                  style: Theme.of(context).textTheme.body1),
+              SizedBox(
+                  width: double.infinity,
+                  child: RaisedButton(
+                      onPressed: _incrementCounter,
+                      child: Text('Amen',
+                          style: TextStyle(
+                              fontSize: Theme.of(context).textTheme.body1.fontSize,
+                              color: Theme.of(context).accentColor))))
             ],
           ),
         ),
