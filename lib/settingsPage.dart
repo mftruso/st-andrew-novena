@@ -44,21 +44,38 @@ class _SettingPagesState extends State<SettingsPage> {
         body: Center(
             child: Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  children: <Widget>[
-                    ListTile(
-                      title: Text('Notifications'),
-                      trailing: Switch(
-                        value: _notificationsEnabled,
-                        onChanged: (value) {
-                          setState(() {
-                            _notificationsEnabled = value;
-                            _storeNotificationPreferences(value);
-                          });
-                        },
-                      ),
-                    )
-                  ],
-                ))));
+
+                // We use [Builder] here to use a [context] that is a descendant of [Scaffold] for showToast to work
+                child: Builder(
+                    builder: (context) => Column(
+                          children: <Widget>[
+                            ListTile(
+                              title: Text('Notifications'),
+                              trailing: Switch(
+                                value: _notificationsEnabled,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _notificationsEnabled = value;
+                                    _storeNotificationPreferences(value);
+                                  });
+                                  _showToast(context, value);
+                                },
+                              ),
+                            )
+                          ],
+                        )))));
+  }
+
+  void _showToast(BuildContext context, bool notificationsEnabled) {
+    debugPrint(
+        'notification setting set to: ' + notificationsEnabled.toString());
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: notificationsEnabled
+            ? Text('Notifications Enabled')
+            : Text('Notifications Disabled'),
+      ),
+    );
   }
 }
