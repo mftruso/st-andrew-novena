@@ -2,17 +2,55 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:st_andrew_novena_flutter/notificationConfig.dart';
 import 'package:st_andrew_novena_flutter/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 
 // +JMJ+
 // AMDG
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+final List<ReceivedNotification> didReceiveLocalNotificationSubject =
+    List<ReceivedNotification>();
+final List<String> selectNotificationSubject = List<String>();
+const appName = 'St. Andrew Novena';
+
+class ReceivedNotification {
+  final int id;
+  final String title;
+  final String body;
+  final String payload;
+
+  ReceivedNotification({
+    @required this.id,
+    @required this.title,
+    @required this.body,
+    @required this.payload,
+  });
+}
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // notification config
   flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  var initializationSettingsAndroid =
+      AndroidInitializationSettings('ic_notifications_white_18dp');
+  var initializationSettingsIOS = IOSInitializationSettings(
+      onDidReceiveLocalNotification:
+          (int id, String title, String body, String payload) async {
+    didReceiveLocalNotificationSubject.add(ReceivedNotification(
+        id: id, title: title, body: body, payload: payload));
+  });
+  var initializationSettings = InitializationSettings(
+      initializationSettingsAndroid, initializationSettingsIOS);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+      onSelectNotification: (String payload) async {
+    if (payload != null) {
+      debugPrint('notification payload: ' + payload);
+    }
+    selectNotificationSubject.add(payload);
+  });
 
   runApp(MyApp());
 }
@@ -23,15 +61,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return MaterialApp(
-      title: 'St. Andrew Novena',
+      title: appName,
       theme: ThemeData(
           primarySwatch: Colors.red,
           accentColor: Colors.red,
-          textTheme: GoogleFonts.montserratTextTheme(textTheme).copyWith(
-             body1: TextStyle(fontSize: 20)
-          )
-      ),
-      home: MyHomePage(title: 'St. Andrew Novena'),
+          textTheme: GoogleFonts.montserratTextTheme(textTheme)
+              .copyWith(body1: TextStyle(fontSize: 20))),
+      home: MyHomePage(title: appName),
     );
   }
 }
@@ -73,6 +109,10 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _counter = counter;
     });
+    bool notificationsEnabled = prefs.getBool('notifications_enabled');
+    if (counter == 15 && notificationsEnabled) {
+      _rescheduleForTomorrow();
+    }
   }
 
   Future _resetCounter() async {
@@ -83,18 +123,25 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  Future<void> _rescheduleForTomorrow() async {
+    debugPrint('cancelling current notifications');
+    await flutterLocalNotificationsPlugin.cancelAll();
+
+    debugPrint('rescheduling notifications');
+    final now = DateTime.now();
+    final tomorrow =
+        DateTime(now.year, now.month, now.day + 1, 7); // 7am tomorrow
+    debugPrint("reschedule time: " + tomorrow.toIso8601String());
+    await flutterLocalNotificationsPlugin.cancel(0);
+    flutterLocalNotificationsPlugin.schedule(0, notificationTitle,
+        notificationBody, tomorrow, platformChannelSpecifics,
+        payload: "RESET");
+  }
+
   @override
   void initState() {
     super.initState();
     _initializeCounter();
-    var initializationSettingsAndroid =
-        AndroidInitializationSettings('app_icon');
-    var initializationSettingsIOS = IOSInitializationSettings(
-        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
-    var initializationSettings = InitializationSettings(
-        initializationSettingsAndroid, initializationSettingsIOS);
-    flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onSelectNotification: onSelectNotification);
   }
 
   @override
@@ -168,7 +215,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: _incrementCounter,
                       child: Text('Amen',
                           style: TextStyle(
-                              fontSize: Theme.of(context).textTheme.body1.fontSize,
+                              fontSize:
+                                  Theme.of(context).textTheme.body1.fontSize,
                               color: Theme.of(context).accentColor))))
             ],
           ),
@@ -207,6 +255,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> onSelectNotification(String payload) async {
     if (payload != null) {
       debugPrint('notification payload: ' + payload);
+
+      // TODO if payload == 'RESET', restart hourly notifications
     }
 
     await Navigator.push(
