@@ -19,7 +19,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: 0.5.4+1
+  shared_preferences: 0.5.12
   flutter_local_notifications: ^1.5.0
   google_fonts: ^0.4.0
 
