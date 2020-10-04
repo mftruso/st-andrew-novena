@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena_flutter/notificationConfig.dart';
 import 'package:st_andrew_novena_flutter/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:timezone/timezone.dart' as tz;
+
 
 // +JMJ+
 // AMDG
@@ -131,11 +133,17 @@ class _MyHomePageState extends State<MyHomePage> {
     debugPrint('rescheduling notifications');
     final now = DateTime.now();
     final tomorrow =
-        DateTime(now.year, now.month, now.day + 1, 7); // 7am tomorrow
+        tz.TZDateTime(tz.local, now.year, now.month, now.day + 1, 7); // 7am tomorrow
     debugPrint("reschedule time: " + tomorrow.toIso8601String());
     await flutterLocalNotificationsPlugin.cancel(0);
-    flutterLocalNotificationsPlugin.schedule(0, notificationTitle,
-        notificationBody, tomorrow, platformChannelSpecifics,
+    flutterLocalNotificationsPlugin.zonedSchedule(
+        0,
+        notificationTitle,
+        notificationBody,
+        tomorrow,
+        platformChannelSpecifics,
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         payload: "RESET");
   }
 
