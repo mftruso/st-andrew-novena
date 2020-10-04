@@ -12,7 +12,8 @@ var androidPlatformChannelSpecifics = AndroidNotificationDetails(
 );
 var iOSPlatformChannelSpecifics = IOSNotificationDetails();
 var platformChannelSpecifics = NotificationDetails(
-    androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+    android: androidPlatformChannelSpecifics,
+    iOS: iOSPlatformChannelSpecifics);
 
 const notificationTitle = 'Oremus';
 const notificationBody = 'Pray the St. Andrew Novena';

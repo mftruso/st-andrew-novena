@@ -42,8 +42,9 @@ void main() async {
     didReceiveLocalNotificationSubject.add(ReceivedNotification(
         id: id, title: title, body: body, payload: payload));
   });
-  var initializationSettings = InitializationSettings(
-      initializationSettingsAndroid, initializationSettingsIOS);
+  final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings,
       onSelectNotification: (String payload) async {
     if (payload != null) {

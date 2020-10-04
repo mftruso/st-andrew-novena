@@ -42,7 +42,7 @@ class _SettingPagesState extends State<SettingsPage> {
         0,
         notificationTitle,
         notificationBody,
-        RepeatInterval.EveryMinute,
+        RepeatInterval.everyMinute,
         platformChannelSpecifics);
     debugPrint('notifications scheduled');
   }
