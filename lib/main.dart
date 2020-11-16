@@ -1,11 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena_flutter/notificationConfig.dart';
+import 'package:st_andrew_novena_flutter/notificationService.dart';
 import 'package:st_andrew_novena_flutter/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tzData;
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 
 
 // +JMJ+
@@ -16,6 +20,7 @@ final List<ReceivedNotification> didReceiveLocalNotificationSubject =
     List<ReceivedNotification>();
 final List<String> selectNotificationSubject = List<String>();
 const appName = 'St. Andrew Novena';
+final getIt = GetIt.instance;
 
 class ReceivedNotification {
   final int id;
@@ -33,6 +38,21 @@ class ReceivedNotification {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  var timezone;
+  tzData.initializeTimeZones();
+  try {
+    timezone = await FlutterNativeTimezone.getLocalTimezone();
+    debugPrint('Local Timezone: ' + timezone);
+    var location = tz.getLocation(timezone);
+    tz.setLocalLocation(location);
+  } on Exception {
+    debugPrint('Could not load local timezone, defaults to UTC');
+  }
+
+  // register the singleton service
+  getIt.registerSingleton<NotificationService>(NotificationService());
+
 
   // notification config
   flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -135,7 +155,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final tomorrow =
         tz.TZDateTime(tz.local, now.year, now.month, now.day + 1, 7); // 7am tomorrow
     debugPrint("reschedule time: " + tomorrow.toIso8601String());
-    await flutterLocalNotificationsPlugin.cancel(0);
     flutterLocalNotificationsPlugin.zonedSchedule(
         0,
         notificationTitle,
@@ -265,7 +284,10 @@ class _MyHomePageState extends State<MyHomePage> {
     if (payload != null) {
       debugPrint('notification payload: ' + payload);
 
-      // TODO if payload == 'RESET', restart hourly notifications
+      if (payload == 'RESET') {
+        _resetCounter();
+        getIt<NotificationService>().scheduleNotifications();
+      }
     }
 
     await Navigator.push(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:st_andrew_novena_flutter/notificationService.dart';
 
-import 'notificationConfig.dart';
+import 'main.dart'; // need for getIt
 
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key key}) : super(key: key);
@@ -13,8 +13,6 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingPagesState extends State<SettingsPage> {
   bool _notificationsEnabled = false;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
 
   Future _initializeSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -28,26 +26,10 @@ class _SettingPagesState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool('notifications_enabled', value);
     if (value) {
-      _scheduleNotifications();
+      getIt<NotificationService>().scheduleNotifications();
     } else {
-      _cancelNotification();
+      getIt<NotificationService>().cancelNotification();
     }
-  }
-
-  Future _scheduleNotifications() async {
-    // Show a notification every minute with the first appearance happening a minute after invoking the method
-    await flutterLocalNotificationsPlugin.periodicallyShow(
-        0,
-        notificationTitle,
-        notificationBody,
-        RepeatInterval.everyMinute,
-        platformChannelSpecifics);
-    debugPrint('notifications scheduled');
-  }
-
-  Future<void> _cancelNotification() async {
-    debugPrint('cancelling notifications');
-    await flutterLocalNotificationsPlugin.cancel(0);
   }
 
   @override
