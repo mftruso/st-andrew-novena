@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:st_andrew_novena_flutter/notificationConfig.dart';
 import 'package:st_andrew_novena_flutter/notificationService.dart';
 import 'package:st_andrew_novena_flutter/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -52,28 +51,6 @@ void main() async {
 
   // register the singleton service
   getIt.registerSingleton<NotificationService>(NotificationService());
-
-
-  // notification config
-  flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-  var initializationSettingsAndroid =
-      AndroidInitializationSettings('ic_notifications_white_18dp');
-  var initializationSettingsIOS = IOSInitializationSettings(
-      onDidReceiveLocalNotification:
-          (int id, String title, String body, String payload) async {
-    didReceiveLocalNotificationSubject.add(ReceivedNotification(
-        id: id, title: title, body: body, payload: payload));
-  });
-  final InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS);
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-      onSelectNotification: (String payload) async {
-    if (payload != null) {
-      debugPrint('notification payload: ' + payload);
-    }
-    selectNotificationSubject.add(payload);
-  });
 
   runApp(MyApp());
 }
@@ -134,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     bool notificationsEnabled = prefs.getBool('notifications_enabled');
     if (counter == 15 && notificationsEnabled) {
-      _rescheduleForTomorrow();
+      getIt<NotificationService>().rescheduleForTomorrow();
     }
   }
 
@@ -146,30 +123,11 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Future<void> _rescheduleForTomorrow() async {
-    debugPrint('cancelling current notifications');
-    await flutterLocalNotificationsPlugin.cancelAll();
-
-    debugPrint('rescheduling notifications');
-    final now = DateTime.now();
-    final tomorrow =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day + 1, 7); // 7am tomorrow
-    debugPrint("reschedule time: " + tomorrow.toIso8601String());
-    flutterLocalNotificationsPlugin.zonedSchedule(
-        0,
-        notificationTitle,
-        notificationBody,
-        tomorrow,
-        platformChannelSpecifics,
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        payload: "RESET");
-  }
-
   @override
   void initState() {
     super.initState();
     _initializeCounter();
+    _initializeNotifications();
   }
 
   @override
@@ -280,12 +238,31 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<void> onSelectNotification(String payload) async {
+  // initialize within the first page so that _selectNotification() has access to the Navigator
+  Future _initializeNotifications() async {
+    // notification config
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    var initializationSettingsAndroid =
+    AndroidInitializationSettings('ic_notifications_white_18dp');
+    var initializationSettingsIOS = IOSInitializationSettings(
+        onDidReceiveLocalNotification:
+            (int id, String title, String body, String payload) async {
+          didReceiveLocalNotificationSubject.add(ReceivedNotification(
+              id: id, title: title, body: body, payload: payload));
+        });
+    final InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: _selectNotification);
+  }
+
+  Future<void> _selectNotification(String payload) async {
     if (payload != null) {
       debugPrint('notification payload: ' + payload);
 
       if (payload == 'RESET') {
-        _resetCounter();
+        await _resetCounter();
         getIt<NotificationService>().scheduleNotifications();
       }
     }
