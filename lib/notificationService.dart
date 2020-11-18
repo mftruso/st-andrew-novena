@@ -13,8 +13,8 @@ class NotificationService {
         0,
         notificationTitle,
         notificationBody,
-//        RepeatInterval.everyMinute, // DEBUG
-        RepeatInterval.hourly,
+        RepeatInterval.everyMinute, // DEBUG
+//        RepeatInterval.hourly,
         platformChannelSpecifics);
     debugPrint('notifications scheduled');
   }

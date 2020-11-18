@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+// TODO icon https://github.com/MaikuB/flutter_local_notifications/tree/master/flutter_local_notifications#custom-notification-icons-and-sounds
 var androidPlatformChannelSpecifics = AndroidNotificationDetails(
     'st-andrew-novena-notifications', // channel id
     'St. Andrew Novena Notifications', // channel name

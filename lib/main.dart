@@ -10,7 +10,6 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzData;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 
-
 // +JMJ+
 // AMDG
 
@@ -41,7 +40,7 @@ void main() async {
   var timezone;
   tzData.initializeTimeZones();
   try {
-    timezone = await FlutterNativeTimezone.getLocalTimezone();
+    timezone = await FlutterNativeTimezone.getLocalTimezone(); //e.g. America/Chicago
     debugPrint('Local Timezone: ' + timezone);
     var location = tz.getLocation(timezone);
     tz.setLocalLocation(location);
@@ -63,10 +62,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: appName,
       theme: ThemeData(
-          primarySwatch: Colors.red,
-          accentColor: Colors.red,
+          primarySwatch:  Colors.red,
+          accentColor: Color(0xFF9f382b),
+          backgroundColor: Color(0xFFe6cb9e),
           textTheme: GoogleFonts.montserratTextTheme(textTheme)
-              .copyWith(body1: TextStyle(fontSize: 20))),
+              .copyWith(bodyText2: TextStyle(fontSize: 20))),
       home: MyHomePage(title: appName),
     );
   }
@@ -94,6 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
   Future _initializeCounter() async {
+    // TODO reset to 0 if its a new day
     final prefs = await SharedPreferences.getInstance();
     int counter = prefs.getInt('counter') ?? 0;
     setState(() {
@@ -111,6 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     bool notificationsEnabled = prefs.getBool('notifications_enabled');
     if (counter == 15 && notificationsEnabled) {
+      // TODO show toast "Prayers complete! Notifications will resume tomorrow at 7am"
       getIt<NotificationService>().rescheduleForTomorrow();
     }
   }
@@ -139,10 +141,12 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
+      backgroundColor: Theme.of(context).backgroundColor,
       appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
           title: Text(widget.title, style: GoogleFonts.montserrat()),
+          backgroundColor: Theme.of(context).accentColor,
           actions: <Widget>[
             PopupMenuButton(
                 onSelected: (result) {
@@ -190,11 +194,19 @@ class _MyHomePageState extends State<MyHomePage> {
             children: <Widget>[
               Text(
                 '$_counter',
-                style: Theme.of(context).textTheme.display1,
+                style: Theme.of(context).textTheme.headline4,
               ),
               Text(
-                  'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire [name your intention], through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                  style: Theme.of(context).textTheme.body1),
+                  'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
+                  style: Theme.of(context).textTheme.bodyText2),
+              Text(
+                  '[name your intention]',
+                  style: Theme.of(context).textTheme.subtitle2
+              ),
+              Text(
+                  'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
+                  style: Theme.of(context).textTheme.bodyText2
+              ),
               SizedBox(
                   width: double.infinity,
                   child: RaisedButton(
@@ -202,7 +214,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Text('Amen',
                           style: TextStyle(
                               fontSize:
-                                  Theme.of(context).textTheme.body1.fontSize,
+                                  Theme.of(context).textTheme.bodyText2.fontSize,
                               color: Theme.of(context).accentColor))))
             ],
           ),
@@ -243,16 +255,17 @@ class _MyHomePageState extends State<MyHomePage> {
     // notification config
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     var initializationSettingsAndroid =
-    AndroidInitializationSettings('ic_notifications_white_18dp');
+        AndroidInitializationSettings('ic_notifications_white_18dp');
     var initializationSettingsIOS = IOSInitializationSettings(
         onDidReceiveLocalNotification:
             (int id, String title, String body, String payload) async {
-          didReceiveLocalNotificationSubject.add(ReceivedNotification(
-              id: id, title: title, body: body, payload: payload));
-        });
-    final InitializationSettings initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsIOS);
+      didReceiveLocalNotificationSubject.add(ReceivedNotification(
+          id: id, title: title, body: body, payload: payload));
+    });
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS);
     await flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onSelectNotification: _selectNotification);
   }
