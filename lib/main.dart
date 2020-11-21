@@ -94,12 +94,30 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
   Future _initializeCounter() async {
-    // TODO reset to 0 if its a new day
+    debugPrint('initializeCounter');
     final prefs = await SharedPreferences.getInstance();
     int counter = prefs.getInt('counter') ?? 0;
-    setState(() {
-      _counter = counter;
-    });
+
+    // check last updated
+    String lastUpdatedStr = prefs.getString('last_updated');
+    if (lastUpdatedStr != null) {
+      debugPrint('Counter last updated: ' + lastUpdatedStr);
+      DateTime lastUpdated =  DateTime.parse(lastUpdatedStr);
+      DateTime now = DateTime.now();
+      DateTime startOfToday = DateTime(now.year, now.month, now.day);
+      if (lastUpdated.isBefore(startOfToday)) {
+        debugPrint('last updated yesterday or before');
+        _resetCounter();
+      } else {
+        setState(() {
+          _counter = counter;
+        });
+      }
+    } else {
+      setState(() {
+        _counter = counter;
+      });
+    }
   }
 
   Future _incrementCounter() async {
@@ -110,15 +128,18 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _counter = counter;
     });
+    DateTime now = DateTime.now();
+    prefs.setString('last_updated', now.toString());
     bool notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     if (counter == 15 && notificationsEnabled) {
-      // TODO show toast "Prayers complete! Notifications will resume tomorrow at 7am"
       getIt<NotificationService>().rescheduleForTomorrow();
+      // TODO show toast "Prayers complete! Notifications will resume tomorrow at 7am"
 //      _showToast();
     }
   }
 
   Future _resetCounter() async {
+    debugPrint('reset counter');
     final prefs = await SharedPreferences.getInstance();
     prefs.setInt('counter', 0);
     setState(() {
