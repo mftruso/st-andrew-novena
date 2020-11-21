@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:st_andrew_novena_flutter/notificationService.dart';
-import 'package:st_andrew_novena_flutter/settingsPage.dart';
+import 'package:st_andrew_novena/notificationService.dart';
+import 'package:st_andrew_novena/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzData;
@@ -110,10 +110,11 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _counter = counter;
     });
-    bool notificationsEnabled = prefs.getBool('notifications_enabled');
+    bool notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     if (counter == 15 && notificationsEnabled) {
       // TODO show toast "Prayers complete! Notifications will resume tomorrow at 7am"
       getIt<NotificationService>().rescheduleForTomorrow();
+//      _showToast();
     }
   }
 
@@ -285,4 +286,14 @@ class _MyHomePageState extends State<MyHomePage> {
       MaterialPageRoute(builder: (context) => MyApp()),
     );
   }
+
+//  void _showToast() {
+//    debugPrint('prayer complete toast');
+//    final scaffold = Scaffold.of(context);
+//    scaffold.showSnackBar(
+//      SnackBar(
+//        content: Text('Prayer complete! Notifications will resume tomorrow at 7:00 a.m.')
+//      ),
+//    );
+//  }
 }

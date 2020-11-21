@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:st_andrew_novena_flutter/notificationService.dart';
+import 'package:st_andrew_novena/notificationService.dart';
 
 import 'main.dart'; // need for getIt
 
