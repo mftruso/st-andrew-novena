@@ -301,11 +301,6 @@ class _MyHomePageState extends State<MyHomePage> {
         getIt<NotificationService>().scheduleNotifications();
       }
     }
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => MyApp()),
-    );
   }
 
 //  void _showToast(BuildContext context) {
