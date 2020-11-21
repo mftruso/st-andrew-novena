@@ -12,6 +12,7 @@ import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 
 // +JMJ+
 // AMDG
+// Sanctus Andrea, ora pro nobis!
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 final List<ReceivedNotification> didReceiveLocalNotificationSubject =
@@ -218,16 +219,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 '$_counter',
                 style: Theme.of(context).textTheme.headline4,
               ),
-              Text(
-                  'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
-                  style: Theme.of(context).textTheme.bodyText2),
-              Text(
-                  '[name your intention]',
-                  style: Theme.of(context).textTheme.subtitle2
-              ),
-              Text(
-                  'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                  style: Theme.of(context).textTheme.bodyText2
+              Container(
+                child: Column(
+                  children: [
+                    Text(
+                      'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
+                        style: Theme.of(context).textTheme.bodyText2
+                    ),
+                    Text(
+                      '[name your intention]',
+                        style: TextStyle(fontStyle: FontStyle.italic, fontSize: 18),
+                    ),
+                    Text(
+                      'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
+                        style: Theme.of(context).textTheme.bodyText2
+                    ),
+                  ],
+                ),
               ),
               SizedBox(
                   width: double.infinity,
