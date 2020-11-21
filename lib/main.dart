@@ -134,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (counter == 15 && notificationsEnabled) {
       getIt<NotificationService>().rescheduleForTomorrow();
       // TODO show toast "Prayers complete! Notifications will resume tomorrow at 7am"
-//      _showToast();
+//      _showToast(context);
     }
   }
 
@@ -308,7 +308,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-//  void _showToast() {
+//  void _showToast(BuildContext context) {
 //    debugPrint('prayer complete toast');
 //    final scaffold = Scaffold.of(context);
 //    scaffold.showSnackBar(
