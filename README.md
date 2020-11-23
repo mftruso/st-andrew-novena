@@ -1,10 +1,10 @@
-# St. Andrew Novena Android App
+# St. Andrew Novena Mobile App
 
 A tradition in the Catholic Church is to pray the St. Andrew Novena prayer 15 times each day
 from the feast of St. Andrew on November 30 until Christmas.
 
 This app aims to aid in that prayer by tracking the number of times the prayer is recited.
-Pretty simple! Just like this prayer.  
+Pretty simple! Just like this prayer.
 
 ## Learn More
 
@@ -15,4 +15,24 @@ Pretty simple! Just like this prayer.
 
 - Tap the Amen button to increment the prayer count
 - Prayer count refreshes each day
-- Periodic reminders from 7 a.m. to 7 p.m.
+- Notifications can be enabled to remind you to pray periodically throughout the day. They start each day at 7 a.m. Once you've completed the prayer 15 times, notifications pause until the next day.
+
+## Development
+
+Built with [Flutter](https://flutter.dev/) v1.22
+
+```
+flutter doctor
+flutter pub get
+```
+
+test on connected android device
+```
+flutter build apk
+flutter install
+```
+
+build android app bundle
+```
+flutter build appbundle
+```
