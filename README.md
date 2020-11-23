@@ -6,6 +6,9 @@ from the feast of St. Andrew on November 30 until Christmas.
 This app aims to aid in that prayer by tracking the number of times the prayer is recited.
 Pretty simple! Just like this prayer.
 
+[Download from the Google Play Store](https://play.google.com/store/apps/details?id=com.miketruso.standrewnovena)
+
+
 ## Learn More
 
 - [What is a Novena?](https://en.wikipedia.org/wiki/Novena)
