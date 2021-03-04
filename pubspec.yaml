@@ -15,19 +15,20 @@ version: 2.0.0+5
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
+  flutter: ^2.0.0
 
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: 0.5.12
-  flutter_local_notifications: ^3.0.1+4
-  google_fonts: ^0.4.0
-  flutter_native_timezone: ^1.0.4
-  get_it: ^5.0.1
+  shared_preferences: 2.0.3
+  flutter_local_notifications: ^4.0.1+1
+  google_fonts: ^0.4.0 #not 2.0 ready https://pub.green/packages/google_fonts
+  flutter_native_timezone: ^1.0.4 #not 2.0 ready https://pub.green/packages/flutter_native_timezone
+  get_it: ^6.0.0 #not sure if 2.0 ready https://pub.green/packages/get_it
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.2
+  cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
