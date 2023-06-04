@@ -22,7 +22,7 @@ Pretty simple! Just like this prayer.
 
 ## Development
 
-Built with [Flutter](https://flutter.dev/) v2.0
+Built with [Flutter](https://flutter.dev/) v3.0
 
 ```
 flutter doctor
@@ -38,4 +38,9 @@ flutter install
 build android app bundle
 ```
 flutter build appbundle
+```
+
+Run locally
+```
+flutter run
 ```

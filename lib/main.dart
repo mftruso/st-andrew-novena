@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:st_andrew_novena/aboutPage.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 import 'package:st_andrew_novena/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,10 +15,11 @@ import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 // AMDG
 // Sanctus Andrea, ora pro nobis!
 
-FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 final List<ReceivedNotification> didReceiveLocalNotificationSubject =
-    List<ReceivedNotification>();
-final List<String> selectNotificationSubject = List<String>();
+    List<ReceivedNotification>.empty();
+final List<String> selectNotificationSubject = List<String>.empty();
 const appName = 'St. Andrew Novena';
 final getIt = GetIt.instance;
 
@@ -28,10 +30,10 @@ class ReceivedNotification {
   final String payload;
 
   ReceivedNotification({
-    @required this.id,
-    @required this.title,
-    @required this.body,
-    @required this.payload,
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.payload,
   });
 }
 
@@ -41,7 +43,8 @@ void main() async {
   var timezone;
   tzData.initializeTimeZones();
   try {
-    timezone = await FlutterNativeTimezone.getLocalTimezone(); //e.g. America/Chicago
+    timezone =
+        await FlutterNativeTimezone.getLocalTimezone(); //e.g. America/Chicago
     debugPrint('Local Timezone: ' + timezone);
     var location = tz.getLocation(timezone);
     tz.setLocalLocation(location);
@@ -60,21 +63,37 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
     return MaterialApp(
       title: appName,
       theme: ThemeData(
-          primarySwatch:  Colors.red,
-          accentColor: Color(0xFF9f382b),
-          backgroundColor: Color(0xFFe6cb9e),
+          colorScheme: ColorScheme(
+            brightness: Brightness.light,
+            primary: Color(0xFF9f382b),
+            onPrimary: Colors.red,
+            // Colors that are not relevant to AppBar in LIGHT mode:
+            primaryContainer: Colors.grey,
+            secondary: Colors.red,
+            secondaryContainer: Colors.grey,
+            onSecondary: Colors.red,
+            background: Color(0xFFe6cb9e),
+            onBackground: Colors.black,
+            surface: Colors.grey.shade100,
+            onSurface: Colors.black,
+            error: Colors.redAccent,
+            onError: Colors.white,
+          ),
+          appBarTheme: AppBarTheme(color: Colors.amber),
+          useMaterial3: true,
           textTheme: GoogleFonts.montserratTextTheme(textTheme)
-              .copyWith(bodyText2: TextStyle(fontSize: 20))),
+              .copyWith(bodySmall: TextStyle(fontSize: 20))),
       home: MyHomePage(title: appName),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({Key? key, this.title = ''}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -91,6 +110,32 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+enum Screens {
+  settings,
+  // about,
+}
+
+class ScreenNavigator {
+  static Screens getScreenFromString(String screenString) {
+    return Screens.values.firstWhere(
+      (screen) => screen.toString().split('.').last == screenString,
+      orElse: () => Screens.settings,
+    );
+  }
+
+  static Widget getScreenWidget(String screenString) {
+    final Screens screen = getScreenFromString(screenString);
+
+    switch (screen) {
+      case Screens.settings:
+        return SettingsPage();
+      // Add cases for other screens
+      default:
+        return Container();
+    }
+  }
+}
+
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
@@ -100,10 +145,11 @@ class _MyHomePageState extends State<MyHomePage> {
     int counter = prefs.getInt('counter') ?? 0;
 
     // check last updated
-    String lastUpdatedStr = prefs.getString('last_updated');
+    String? lastUpdatedStr = prefs.getString('last_updated');
+
     if (lastUpdatedStr != null) {
       debugPrint('Counter last updated: ' + lastUpdatedStr);
-      DateTime lastUpdated =  DateTime.parse(lastUpdatedStr);
+      DateTime lastUpdated = DateTime.parse(lastUpdatedStr);
       DateTime now = DateTime.now();
       DateTime startOfToday = DateTime(now.year, now.month, now.day);
       if (lastUpdated.isBefore(startOfToday)) {
@@ -164,22 +210,25 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      backgroundColor: Theme.of(context).backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
           title: Text(widget.title, style: GoogleFonts.montserrat()),
-          backgroundColor: Theme.of(context).accentColor,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           actions: <Widget>[
             PopupMenuButton(
                 onSelected: (result) {
-                  if (result == 'reset') {
-                    _resetCounter();
-                  } else if (result == 'settings') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SettingsPage()),
-                    );
+                  switch (result) {
+                    case 'reset':
+                      _resetCounter();
+                      break;
+                    default:
+                      final Widget screen =
+                          ScreenNavigator.getScreenWidget(result);
+
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => screen));
                   }
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry>[
@@ -191,6 +240,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: Text('Settings'),
                         value: 'settings',
                       ),
+                      // const PopupMenuItem(
+                      //   child: Text('About'),
+                      //   value: 'about',
+                      // ),
                     ])
           ]),
       body: Center(
@@ -217,35 +270,36 @@ class _MyHomePageState extends State<MyHomePage> {
             children: <Widget>[
               Text(
                 '$_counter',
-                style: Theme.of(context).textTheme.headline4,
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
               Container(
                 child: Column(
                   children: [
                     Text(
-                      'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
-                        style: Theme.of(context).textTheme.bodyText2
-                    ),
+                        'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
+                        style: Theme.of(context).textTheme.bodySmall),
                     Text(
                       '[name your intention]',
-                        style: TextStyle(fontStyle: FontStyle.italic, fontSize: 18),
+                      style:
+                          TextStyle(fontStyle: FontStyle.italic, fontSize: 18),
                     ),
                     Text(
-                      'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                        style: Theme.of(context).textTheme.bodyText2
-                    ),
+                        'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
+                        style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
               ),
               SizedBox(
                   width: double.infinity,
-                  child: RaisedButton(
+                  child: ElevatedButton(
                       onPressed: _incrementCounter,
                       child: Text('Amen',
                           style: TextStyle(
-                              fontSize:
-                                  Theme.of(context).textTheme.bodyText2.fontSize,
-                              color: Theme.of(context).accentColor))))
+                              fontSize: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.fontSize,
+                              color: Theme.of(context).colorScheme.primary))))
             ],
           ),
         ),
@@ -259,8 +313,8 @@ class _MyHomePageState extends State<MyHomePage> {
     await showDialog(
       context: context,
       builder: (BuildContext context) => CupertinoAlertDialog(
-        title: title != null ? Text(title) : null,
-        content: body != null ? Text(body) : null,
+        title: Text(title),
+        content: Text(body),
         actions: [
           CupertinoDialogAction(
             isDefaultAction: true,
@@ -284,23 +338,32 @@ class _MyHomePageState extends State<MyHomePage> {
   Future _initializeNotifications() async {
     // notification config
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestPermission();
     var initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notifications_white_18dp');
-    var initializationSettingsIOS = IOSInitializationSettings(
+    var initializationSettingsIOS = DarwinInitializationSettings(
         onDidReceiveLocalNotification:
-            (int id, String title, String body, String payload) async {
+            (int id, String? title, String? body, String? payload) async {
       didReceiveLocalNotificationSubject.add(ReceivedNotification(
-          id: id, title: title, body: body, payload: payload));
+          id: id,
+          title: title ?? '',
+          body: body ?? '',
+          payload: payload ?? ''));
     });
     final InitializationSettings initializationSettings =
         InitializationSettings(
             android: initializationSettingsAndroid,
             iOS: initializationSettingsIOS);
     await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onSelectNotification: _selectNotification);
+        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
   }
 
-  Future<void> _selectNotification(String payload) async {
+  void onDidReceiveNotificationResponse(NotificationResponse? response) async {
+    String? payload = response?.payload;
+
     if (payload != null) {
       debugPrint('notification payload: ' + payload);
 

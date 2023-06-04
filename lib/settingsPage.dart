@@ -5,7 +5,7 @@ import 'package:st_andrew_novena/notificationService.dart';
 import 'main.dart'; // need for getIt
 
 class SettingsPage extends StatefulWidget {
-  SettingsPage({Key key}) : super(key: key);
+  SettingsPage({Key? key}) : super(key: key);
 
   @override
   _SettingPagesState createState() => _SettingPagesState();
@@ -16,7 +16,7 @@ class _SettingPagesState extends State<SettingsPage> {
 
   Future _initializeSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    bool notificationsEnabled = prefs.getBool('notifications_enabled');
+    bool? notificationsEnabled = prefs.getBool('notifications_enabled');
     setState(() {
       _notificationsEnabled = notificationsEnabled ?? false;
     });
@@ -43,7 +43,7 @@ class _SettingPagesState extends State<SettingsPage> {
     return Scaffold(
         appBar: AppBar(
           title: Text('Settings'),
-          backgroundColor: Theme.of(context).accentColor,
+          backgroundColor: Theme.of(context).colorScheme.background,
           automaticallyImplyLeading: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
@@ -73,8 +73,10 @@ class _SettingPagesState extends State<SettingsPage> {
                             ),
                             ListTile(
                               dense: true,
-                              title: Text('Enables hourly notifications until the prayer is completed 15 times daily. Notifications resume at 7 a.m. each day.',
-                                style: Theme.of(context).textTheme.subtitle2,),
+                              title: Text(
+                                'Enables hourly notifications until the prayer is completed 15 times daily. Notifications resume at 7 a.m. each day.',
+                                style: Theme.of(context).textTheme.subtitle2,
+                              ),
                             )
                           ],
                         )))));
@@ -83,7 +85,7 @@ class _SettingPagesState extends State<SettingsPage> {
   void _showToast(BuildContext context, bool notificationsEnabled) {
     debugPrint(
         'notification setting set to: ' + notificationsEnabled.toString());
-    final scaffold = Scaffold.of(context);
+    final scaffold = ScaffoldMessenger.of(context);
     scaffold.showSnackBar(
       SnackBar(
         content: notificationsEnabled
