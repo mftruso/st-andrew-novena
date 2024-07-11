@@ -75,7 +75,7 @@ class _SettingPagesState extends State<SettingsPage> {
                               dense: true,
                               title: Text(
                                 'Enables hourly notifications until the prayer is completed 15 times daily. Notifications resume at 7 a.m. each day.',
-                                style: Theme.of(context).textTheme.subtitle2,
+                                style: Theme.of(context).textTheme.titleSmall,
                               ),
                             )
                           ],
