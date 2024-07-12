@@ -35,12 +35,24 @@ flutter build apk
 flutter install
 ```
 
-build android app bundle
-```
-flutter build appbundle
-```
-
 Run locally
 ```
 flutter run
+```
+
+## Publish
+
+### Android
+
+create `android/key.properties`. NB: this file should never be committed 
+```
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=<location of the key store file, such as /Users/<user name>/android.jks>
+```
+
+build android app bundle
+```
+flutter build appbundle
 ```
