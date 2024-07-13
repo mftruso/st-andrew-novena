@@ -9,7 +9,7 @@ import 'package:st_andrew_novena/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzData;
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 // +JMJ+
 // AMDG
@@ -44,7 +44,7 @@ void main() async {
   tzData.initializeTimeZones();
   try {
     timezone =
-        await FlutterNativeTimezone.getLocalTimezone(); //e.g. America/Chicago
+        await FlutterTimezone.getLocalTimezone(); //e.g. America/Chicago
     debugPrint('Local Timezone: ' + timezone);
     var location = tz.getLocation(timezone);
     tz.setLocalLocation(location);
