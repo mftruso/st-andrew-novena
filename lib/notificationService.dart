@@ -15,7 +15,8 @@ class NotificationService {
         notificationBody,
        // RepeatInterval.everyMinute, // DEBUG
         RepeatInterval.hourly,
-        platformChannelSpecifics);
+        platformChannelSpecifics,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle);
     debugPrint('notifications scheduled');
   }
 
@@ -41,8 +42,7 @@ class NotificationService {
         notificationBody,
         tomorrow,
         platformChannelSpecifics,
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         payload: "RESET");
   }
 }

@@ -76,9 +76,7 @@ class MyApp extends StatelessWidget {
             secondary: Colors.red,
             secondaryContainer: Colors.grey,
             onSecondary: Colors.red,
-            background: Color(0xFFe6cb9e),
-            onBackground: Colors.black,
-            surface: Colors.grey.shade100,
+            surface: Color(0xFFe6cb9e),
             onSurface: Colors.black,
             error: Colors.redAccent,
             onError: Colors.white,
@@ -293,6 +291,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   width: double.infinity,
                   child: ElevatedButton(
                       onPressed: _incrementCounter,
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade100),
                       child: Text('Amen',
                           style: TextStyle(
                               fontSize: Theme.of(context)
@@ -337,26 +336,18 @@ class _MyHomePageState extends State<MyHomePage> {
   // initialize within the first page so that _selectNotification() has access to the Navigator
   Future _initializeNotifications() async {
     // notification config
-    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-    flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestPermission();
+    flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+
     var initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notifications_white_18dp');
-    var initializationSettingsIOS = DarwinInitializationSettings(
-        onDidReceiveLocalNotification:
-            (int id, String? title, String? body, String? payload) async {
-      didReceiveLocalNotificationSubject.add(ReceivedNotification(
-          id: id,
-          title: title ?? '',
-          body: body ?? '',
-          payload: payload ?? ''));
-    });
+    final DarwinInitializationSettings initializationSettingsDarwin =
+    DarwinInitializationSettings();
+
     final InitializationSettings initializationSettings =
         InitializationSettings(
             android: initializationSettingsAndroid,
-            iOS: initializationSettingsIOS);
+            iOS: initializationSettingsDarwin);
     await flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
   }
