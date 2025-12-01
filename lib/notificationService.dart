@@ -30,17 +30,21 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.cancelAll();
 
     debugPrint('rescheduling notifications');
-    final now = DateTime.now();
-//    final now = DateTime.now().toUtc(); // DEBUG
-    final tomorrow =
-    tz.TZDateTime(tz.local, now.year, now.month, now.day + 1, 7); // 7am tomorrow
-//    tz.TZDateTime(tz.local, now.year, now.month, now.day, now.hour, now.minute + 1); // DEBUG in a minute
-    debugPrint("reschedule time: " + tomorrow.toIso8601String());
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, 7);
+       // tz.TZDateTime(tz.local, now.year, now.month, now.day, now.hour, now.minute + 1); // DEBUG in a minute
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    
+    debugPrint("reschedule time: " + scheduledDate.toIso8601String());
     flutterLocalNotificationsPlugin.zonedSchedule(
         0,
         notificationTitle,
         notificationBody,
-        tomorrow,
+        scheduledDate,
         platformChannelSpecifics,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         payload: "RESET");
