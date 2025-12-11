@@ -3,50 +3,34 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'notificationConfig.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-
 class NotificationService {
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-  Future scheduleNotifications() async {
-    // Show a notification every minute with the first appearance happening a minute after invoking the method
-    await flutterLocalNotificationsPlugin.periodicallyShow(
-        0,
-        notificationTitle,
-        notificationBody,
-       // RepeatInterval.everyMinute, // DEBUG
-        RepeatInterval.hourly,
-        platformChannelSpecifics,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle);
-    debugPrint('notifications scheduled');
-  }
-
-  Future<void> cancelNotification() async {
-    debugPrint('cancelling notifications');
-    await flutterLocalNotificationsPlugin.cancel(0);
-  }
-
-  Future<void> rescheduleForTomorrow() async {
-    debugPrint('cancelling current notifications');
-    await flutterLocalNotificationsPlugin.cancelAll();
-
-    debugPrint('rescheduling notifications');
+  Future<void> scheduleNotificationsFor(DateTime day) async {
+    debugPrint('scheduling notifications for ${day.toIso8601String()}');
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, 7);
-       // tz.TZDateTime(tz.local, now.year, now.month, now.day, now.hour, now.minute + 1); // DEBUG in a minute
+        tz.TZDateTime(tz.local, day.year, day.month, day.day, 7);
 
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    for (int i = 0; i < 15; i++) {
+      final tz.TZDateTime scheduledTime = scheduledDate.add(Duration(hours: i));
+      if (scheduledTime.isAfter(now)) {
+        flutterLocalNotificationsPlugin.zonedSchedule(
+          i, // unique id from 0 to 14
+          notificationTitle,
+          notificationBody,
+          scheduledTime,
+          platformChannelSpecifics,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+        debugPrint('scheduled notification $i for $scheduledTime');
+      }
     }
-    
-    debugPrint("reschedule time: " + scheduledDate.toIso8601String());
-    flutterLocalNotificationsPlugin.zonedSchedule(
-        0,
-        notificationTitle,
-        notificationBody,
-        scheduledDate,
-        platformChannelSpecifics,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        payload: "RESET");
+  }
+
+  Future<void> cancelAllNotifications() async {
+    debugPrint('cancelling all notifications');
+    await flutterLocalNotificationsPlugin.cancelAll();
   }
 }

@@ -26,9 +26,9 @@ class _SettingPagesState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool('notifications_enabled', value);
     if (value) {
-      getIt<NotificationService>().scheduleNotifications();
+      getIt<NotificationService>().scheduleNotificationsFor(DateTime.now());
     } else {
-      getIt<NotificationService>().cancelNotification();
+      getIt<NotificationService>().cancelAllNotifications();
     }
   }
 
