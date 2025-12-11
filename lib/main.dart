@@ -153,12 +153,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
     bool notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     if (counter >= 15 && notificationsEnabled) {
+      _showToast(context);
       await getIt<NotificationService>().cancelAllNotifications();
       final tomorrow = DateTime.now().add(Duration(days: 1));
       await getIt<NotificationService>().scheduleNotificationsFor(tomorrow);
       await prefs.setString('last_scheduled_day', tomorrow.toIso8601String().substring(0, 10));
-      // TODO: show toast "Prayers complete! Notifications will resume tomorrow."
     }
+  }
+
+  void _showToast(BuildContext context) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: const Text('Prayers complete! Notifications will resume tomorrow.'),
+      ),
+    );
   }
 
   Future<void> _resetCounter() async {
