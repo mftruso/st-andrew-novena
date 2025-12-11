@@ -4,8 +4,11 @@ import 'notificationConfig.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
+  NotificationService({FlutterLocalNotificationsPlugin? plugin})
+      : flutterLocalNotificationsPlugin =
+            plugin ?? FlutterLocalNotificationsPlugin();
 
   Future<void> scheduleNotificationsFor(DateTime day) async {
     debugPrint('scheduling notifications for ${day.toIso8601String()}');
