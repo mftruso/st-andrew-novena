@@ -14,8 +14,6 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 // AMDG
 // Sanctus Andrea, ora pro nobis!
 
-FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = 
-    FlutterLocalNotificationsPlugin();
 final getIt = GetIt.instance;
 
 void main() async {
@@ -101,7 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _initializeCounter();
-    _initializeNotifications();
+    getIt<NotificationService>().initialize();
     _scheduleDailyNotificationsIfNeeded();
   }
 
@@ -240,23 +238,5 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
-  }
-
-  Future<void> _initializeNotifications() async {
-    flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation< 
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-
-    var initializationSettingsAndroid = 
-        AndroidInitializationSettings('ic_notifications_white_18dp');
-    final DarwinInitializationSettings initializationSettingsDarwin = 
-        DarwinInitializationSettings();
-
-    final InitializationSettings initializationSettings = 
-        InitializationSettings(
-            android: initializationSettingsAndroid,
-            iOS: initializationSettingsDarwin);
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 }

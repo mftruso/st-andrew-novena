@@ -10,6 +10,30 @@ class NotificationService {
       : flutterLocalNotificationsPlugin =
             plugin ?? FlutterLocalNotificationsPlugin();
 
+  Future<void> initialize() async {
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('ic_notifications_white_18dp');
+    final DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings();
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsDarwin);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
+  }
+
+  void onDidReceiveNotificationResponse(NotificationResponse? response) {
+    // Handle notification tapped
+    debugPrint('notification tapped: ${response?.payload}');
+  }
+
   Future<void> scheduleNotificationsFor(DateTime day) async {
     debugPrint('scheduling notifications for ${day.toIso8601String()}');
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);

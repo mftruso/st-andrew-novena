@@ -8,7 +8,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'notification_service_test.mocks.dart';
 
-@GenerateMocks([FlutterLocalNotificationsPlugin])
+@GenerateMocks([FlutterLocalNotificationsPlugin, NotificationService])
 void main() {
   late NotificationService notificationService;
   late MockFlutterLocalNotificationsPlugin mockFlutterLocalNotificationsPlugin;

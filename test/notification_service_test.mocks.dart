@@ -5,7 +5,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:flutter_local_notifications/src/flutter_local_notifications_plugin.dart'
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     as _i2;
 import 'package:flutter_local_notifications/src/initialization_settings.dart'
     as _i4;
@@ -17,6 +17,7 @@ import 'package:flutter_local_notifications/src/types.dart' as _i9;
 import 'package:flutter_local_notifications_platform_interface/flutter_local_notifications_platform_interface.dart'
     as _i5;
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:st_andrew_novena/notificationService.dart' as _i10;
 import 'package:timezone/timezone.dart' as _i7;
 
 // ignore_for_file: type=lint
@@ -33,6 +34,17 @@ import 'package:timezone/timezone.dart' as _i7;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 // ignore_for_file: invalid_use_of_internal_member
+
+class _FakeFlutterLocalNotificationsPlugin_0 extends _i1.SmartFake
+    implements _i2.FlutterLocalNotificationsPlugin {
+  _FakeFlutterLocalNotificationsPlugin_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
 
 /// A class which mocks [FlutterLocalNotificationsPlugin].
 ///
@@ -243,4 +255,65 @@ class MockFlutterLocalNotificationsPlugin extends _i1.Mock
         returnValue: _i3.Future<List<_i5.ActiveNotification>>.value(
             <_i5.ActiveNotification>[]),
       ) as _i3.Future<List<_i5.ActiveNotification>>);
+}
+
+/// A class which mocks [NotificationService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockNotificationService extends _i1.Mock
+    implements _i10.NotificationService {
+  MockNotificationService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i2.FlutterLocalNotificationsPlugin get flutterLocalNotificationsPlugin =>
+      (super.noSuchMethod(
+        Invocation.getter(#flutterLocalNotificationsPlugin),
+        returnValue: _FakeFlutterLocalNotificationsPlugin_0(
+          this,
+          Invocation.getter(#flutterLocalNotificationsPlugin),
+        ),
+      ) as _i2.FlutterLocalNotificationsPlugin);
+
+  @override
+  _i3.Future<void> initialize() => (super.noSuchMethod(
+        Invocation.method(
+          #initialize,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  void onDidReceiveNotificationResponse(_i5.NotificationResponse? response) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #onDidReceiveNotificationResponse,
+          [response],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i3.Future<void> scheduleNotificationsFor(DateTime? day) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #scheduleNotificationsFor,
+          [day],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> cancelAllNotifications() => (super.noSuchMethod(
+        Invocation.method(
+          #cancelAllNotifications,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 }
