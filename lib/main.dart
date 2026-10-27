@@ -92,15 +92,39 @@ class ScreenNavigator {
   }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _counter = 0;
 
   @override
   void initState() {
     super.initState();
-    _initializeCounter();
-    getIt<NotificationService>().initialize();
-    _scheduleDailyNotificationsIfNeeded();
+    WidgetsBinding.instance.addObserver(this);
+    _startup();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _onResumed();
+    }
+  }
+
+  Future<void> _startup() async {
+    await getIt<NotificationService>().initialize();
+    await _initializeCounter();
+    await getIt<NotificationService>().syncNotifications();
+  }
+
+  Future<void> _onResumed() async {
+    debugPrint('app resumed');
+    await _initializeCounter();
+    await getIt<NotificationService>().syncNotifications();
   }
 
   Future<void> _initializeCounter() async {
@@ -114,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
       DateTime now = DateTime.now();
       DateTime startOfToday = DateTime(now.year, now.month, now.day);
       if (lastUpdated.isBefore(startOfToday)) {
-        _resetCounter();
+        await _resetCounter();
       } else {
         setState(() {
           _counter = counter;
@@ -124,21 +148,6 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         _counter = counter;
       });
-    }
-  }
-
-  Future<void> _scheduleDailyNotificationsIfNeeded() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? lastScheduledDayStr = prefs.getString('last_scheduled_day');
-    final String todayStr = DateTime.now().toIso8601String().substring(0, 10);
-
-    if (lastScheduledDayStr != todayStr) {
-      debugPrint('scheduling notifications for today: $todayStr');
-      await getIt<NotificationService>().cancelAllNotifications();
-      await getIt<NotificationService>().scheduleNotificationsFor(DateTime.now());
-      await prefs.setString('last_scheduled_day', todayStr);
-    } else {
-      debugPrint('notifications already scheduled for today: $todayStr');
     }
   }
 
@@ -154,10 +163,8 @@ class _MyHomePageState extends State<MyHomePage> {
     bool notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     if (counter >= 15 && notificationsEnabled) {
       _showToast(context);
-      await getIt<NotificationService>().cancelAllNotifications();
-      final tomorrow = DateTime.now().add(Duration(days: 1));
-      await getIt<NotificationService>().scheduleNotificationsFor(tomorrow);
-      await prefs.setString('last_scheduled_day', tomorrow.toIso8601String().substring(0, 10));
+      // prefs now show today's prayers complete, so this skips today
+      await getIt<NotificationService>().syncNotifications();
     }
   }
 
@@ -179,6 +186,12 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  Future<void> _resetCounterAndResync() async {
+    await _resetCounter();
+    // prayers are no longer complete, so reminders resume today
+    await getIt<NotificationService>().syncNotifications();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -190,7 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
           PopupMenuButton(
               onSelected: (result) {
                 if (result == 'reset') {
-                  _resetCounter();
+                  _resetCounterAndResync();
                 } else {
                   Navigator.push(
                       context,
