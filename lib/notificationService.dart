@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'notificationConfig.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+const int notificationsPerDay = 15;
+const int notificationDays = 4;
+const int maxPendingNotifications = 64; // iOS per-app cap on pending local notifications
+
 class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  final tz.TZDateTime Function() _now;
 
-  NotificationService({FlutterLocalNotificationsPlugin? plugin})
+  NotificationService(
+      {FlutterLocalNotificationsPlugin? plugin, tz.TZDateTime Function()? now})
       : flutterLocalNotificationsPlugin =
-            plugin ?? FlutterLocalNotificationsPlugin();
+            plugin ?? FlutterLocalNotificationsPlugin(),
+        _now = now ?? (() => tz.TZDateTime.now(tz.local));
 
   Future<void> initialize() async {
     flutterLocalNotificationsPlugin
@@ -34,26 +42,66 @@ class NotificationService {
     debugPrint('notification tapped: ${response?.payload}');
   }
 
-  Future<void> scheduleNotificationsFor(DateTime day) async {
-    debugPrint('scheduling notifications for ${day.toIso8601String()}');
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate =
-        tz.TZDateTime(tz.local, day.year, day.month, day.day, 7);
+  /// Schedules one-shot notifications hourly from 7 a.m. to 9 p.m. for
+  /// today and the next [notificationDays] - 1 days, skipping times that have
+  /// already passed. IDs are `day * notificationsPerDay + slot`. With
+  /// [skipToday], nothing is scheduled for today.
+  Future<void> scheduleNotifications({bool skipToday = false}) async {
+    final tz.TZDateTime now = _now();
+    debugPrint('scheduling notifications (now: $now, skipToday: $skipToday)');
 
-    for (int i = 0; i < 15; i++) {
-      final tz.TZDateTime scheduledTime = scheduledDate.add(Duration(hours: i));
-      if (scheduledTime.isAfter(now)) {
-        flutterLocalNotificationsPlugin.zonedSchedule(
-          i, // unique id from 0 to 14
+    for (int day = 0; day < notificationDays; day++) {
+      if (day == 0 && skipToday) {
+        continue;
+      }
+      for (int slot = 0; slot < notificationsPerDay; slot++) {
+        final tz.TZDateTime scheduledTime = tz.TZDateTime(
+            tz.local, now.year, now.month, now.day + day, 7 + slot);
+        if (!scheduledTime.isAfter(now)) {
+          continue;
+        }
+        final int id = day * notificationsPerDay + slot;
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          id,
           notificationTitle,
           notificationBody,
           scheduledTime,
           platformChannelSpecifics,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
-        debugPrint('scheduled notification $i for $scheduledTime');
+        debugPrint('scheduled notification $id for $scheduledTime');
       }
     }
+  }
+
+  /// Brings scheduled notifications in line with the stored preferences:
+  /// cancels everything, then (if enabled) schedules the rolling window of
+  /// notifications, skipping today when today's 15 prayers are complete.
+  Future<void> syncNotifications() async {
+    await cancelAllNotifications();
+
+    final prefs = await SharedPreferences.getInstance();
+    final bool notificationsEnabled =
+        prefs.getBool('notifications_enabled') ?? false;
+    if (!notificationsEnabled) {
+      debugPrint('notifications disabled, nothing scheduled');
+      return;
+    }
+
+    await scheduleNotifications(skipToday: _prayersCompleteToday(prefs));
+  }
+
+  bool _prayersCompleteToday(SharedPreferences prefs) {
+    final int counter = prefs.getInt('counter') ?? 0;
+    final String? lastUpdatedStr = prefs.getString('last_updated');
+    if (counter < 15 || lastUpdatedStr == null) {
+      return false;
+    }
+    final DateTime lastUpdated = DateTime.parse(lastUpdatedStr);
+    final tz.TZDateTime now = _now();
+    return lastUpdated.year == now.year &&
+        lastUpdated.month == now.month &&
+        lastUpdated.day == now.day;
   }
 
   Future<void> cancelAllNotifications() async {

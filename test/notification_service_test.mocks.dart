@@ -297,11 +297,22 @@ class MockNotificationService extends _i1.Mock
       );
 
   @override
-  _i3.Future<void> scheduleNotificationsFor(DateTime? day) =>
+  _i3.Future<void> scheduleNotifications({bool? skipToday = false}) =>
       (super.noSuchMethod(
         Invocation.method(
-          #scheduleNotificationsFor,
-          [day],
+          #scheduleNotifications,
+          [],
+          {#skipToday: skipToday},
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> syncNotifications() => (super.noSuchMethod(
+        Invocation.method(
+          #syncNotifications,
+          [],
         ),
         returnValue: _i3.Future<void>.value(),
         returnValueForMissingStub: _i3.Future<void>.value(),

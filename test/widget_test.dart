@@ -28,9 +28,12 @@ void main() {
 
     mockNotificationService = MockNotificationService();
     when(mockNotificationService.initialize()).thenAnswer((_) async => {});
-    when(mockNotificationService.scheduleNotificationsFor(any))
+    when(mockNotificationService.scheduleNotifications(
+            skipToday: anyNamed('skipToday')))
         .thenAnswer((_) async => {});
     when(mockNotificationService.cancelAllNotifications())
+        .thenAnswer((_) async => {});
+    when(mockNotificationService.syncNotifications())
         .thenAnswer((_) async => {});
 
     final getIt = GetIt.instance;
@@ -60,5 +63,103 @@ void main() {
     // Verify that our counter has incremented.
     expect(find.text('0'), findsNothing);
     expect(find.text('1'), findsOneWidget);
+  });
+
+  testWidgets('launch initializes then syncs notifications',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    verifyInOrder([
+      mockNotificationService.initialize(),
+      mockNotificationService.syncNotifications(),
+    ]);
+  });
+
+  testWidgets('15th prayer with notifications enabled resyncs notifications',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({
+      'notifications_enabled': true,
+      'counter': 14,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    expect(find.text('14'), findsOneWidget);
+    verify(mockNotificationService.syncNotifications()).called(1); // startup
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('15'), findsOneWidget);
+    verify(mockNotificationService.syncNotifications()).called(1);
+    verifyNever(mockNotificationService.cancelAllNotifications());
+    verifyNever(mockNotificationService.scheduleNotifications(
+        skipToday: anyNamed('skipToday')));
+    expect(find.text('Prayers complete! Notifications will resume tomorrow.'),
+        findsOneWidget);
+  });
+
+  testWidgets('15th prayer with notifications disabled schedules nothing',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({
+      'notifications_enabled': false,
+      'counter': 14,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    verify(mockNotificationService.syncNotifications()).called(1); // startup
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('15'), findsOneWidget);
+    verifyNever(mockNotificationService.syncNotifications());
+    verifyNever(mockNotificationService.cancelAllNotifications());
+    verifyNever(mockNotificationService.scheduleNotifications(
+        skipToday: anyNamed('skipToday')));
+  });
+
+  testWidgets('resuming on a new day resets the counter and resyncs',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({
+      'notifications_enabled': true,
+      'counter': 7,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    expect(find.text('7'), findsOneWidget);
+    verify(mockNotificationService.syncNotifications()).called(1);
+
+    // the app sat in the background overnight
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_updated',
+        DateTime.now().subtract(const Duration(days: 1)).toString());
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.text('0'), findsOneWidget);
+    verify(mockNotificationService.syncNotifications()).called(1);
+  });
+
+  testWidgets('toggling the notifications setting resyncs',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    clearInteractions(mockNotificationService);
+
+    await tester.tap(find.byType(PopupMenuButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    verify(mockNotificationService.syncNotifications()).called(1);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('notifications_enabled'), isTrue);
   });
 }

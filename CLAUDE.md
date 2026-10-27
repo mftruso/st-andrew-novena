@@ -13,7 +13,7 @@ flutter pub get                                   # install deps
 flutter run                                       # run on device/emulator
 flutter test                                      # run all tests (this is all CI runs, on every push)
 flutter test test/widget_test.dart                # run one test file
-flutter test --plain-name "schedules 15 notifications for a future day"   # run one test by name
+flutter test --plain-name "skipToday schedules only the following 3 days"   # run one test by name
 dart run build_runner build --delete-conflicting-outputs   # regenerate mockito mocks
 flutter build apk && flutter install              # install a build on a connected Android device
 flutter build appbundle                           # Play Store release build
@@ -26,14 +26,14 @@ Release builds need `android/key.properties` (storePassword, keyPassword, keyAli
 All app code is in `lib/` as a few flat files. There is no state-management library: state is a `StatefulWidget` and is persisted with `SharedPreferences`.
 
 - **`main.dart`**: initializes timezones (`timezone` + `flutter_timezone`, falling back to UTC), registers `NotificationService` as a `get_it` singleton (`getIt`, exported from `main.dart`, which is why `settingsPage.dart` imports `main.dart`), and holds the home screen with the counter logic.
-- **`notificationService.dart`**: wraps `FlutterLocalNotificationsPlugin`. The plugin is injectable through the constructor so tests can pass a mock. `scheduleNotificationsFor(day)` schedules up to 15 hourly notifications (IDs 0–14) starting at 7 a.m. local time, skipping times that have already passed.
-- **`notificationConfig.dart`**: notification channel details and the notification title/body.
+- **`notificationService.dart`**: wraps `FlutterLocalNotificationsPlugin`. The plugin and a clock (`now`) are injectable through the constructor so tests can pass a mock and a fixed time. `scheduleNotifications({skipToday})` schedules a rolling window of one-shot notifications: `notificationsPerDay` (15) hourly slots from 7 a.m. to 9 p.m. local time for `notificationDays` (4) days starting today, skipping times that have passed (and all of today with `skipToday: true`). IDs are `day * notificationsPerDay + slot` (0–59). The window must stay within `maxPendingNotifications` (64, the iOS per-app cap on pending notifications); a test fails if the constants exceed it. Don't use `matchDateTimeComponents` (repeating) here: the plugin ignores the date and fires at the next matching time, so today can't be skipped. `syncNotifications()` is the single place that decides what is scheduled from `SharedPreferences`: it cancels everything, then schedules if enabled, skipping today when today's 15 prayers are done.
+- **`notificationConfig.dart`**: notification channel details and the notification title/body. Android reminders time out after 59 minutes (`timeoutAfter`) and iOS ones share a `threadIdentifier`, so missed reminders don't pile up.
 
 ### SharedPreferences keys (behavior spans several files)
 
 - `counter` / `last_updated`: the counter resets to 0 on launch if `last_updated` is before the start of today.
-- `notifications_enabled`: toggled in `settingsPage.dart`, which schedules today's notifications or cancels all of them.
-- `last_scheduled_day` (`YYYY-MM-DD`): on startup, if it isn't today, all notifications are cancelled and today's are rescheduled. When the counter reaches 15 with notifications enabled, today's notifications are cancelled, tomorrow's are scheduled, and this key is set to tomorrow.
+- `notifications_enabled`: toggled in `settingsPage.dart`, which then calls `syncNotifications()`.
+- `syncNotifications()` runs on startup (after `initialize()` and the counter check), on app resume (`WidgetsBindingObserver`), after the Reset menu item, on the settings toggle, and when the counter reaches 15 with notifications enabled (prefs then show today complete, so today's remaining reminders are dropped). Each run rebuilds the 4-day window, so reminders only stop if the app isn't opened for 4+ days.
 
 ## Tests
 
