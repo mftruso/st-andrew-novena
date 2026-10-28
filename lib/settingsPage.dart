@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 
@@ -37,50 +37,55 @@ class _SettingPagesState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Settings'),
-          backgroundColor: Theme.of(context).colorScheme.background,
-          automaticallyImplyLeading: true,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context, false),
+      appBar: AppBar(
+        title: Text('Settings'),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        automaticallyImplyLeading: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context, false),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+
+          // We use [Builder] here to use a [context] that is a descendant of [Scaffold] for showToast to work
+          child: Builder(
+            builder: (context) => Column(
+              children: <Widget>[
+                ListTile(
+                  title: Text('Notifications'),
+                  trailing: Switch(
+                    value: _notificationsEnabled,
+                    onChanged: (value) async {
+                      setState(() {
+                        _notificationsEnabled = value;
+                      });
+                      _showToast(context, value);
+                      await _storeNotificationPreferences(value);
+                    },
+                  ),
+                ),
+                ListTile(
+                  dense: true,
+                  title: Text(
+                    'Enables hourly notifications until the prayer is completed 15 times daily. Notifications resume at 7 a.m. each day.',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        body: Center(
-            child: Padding(
-                padding: const EdgeInsets.all(10.0),
-
-                // We use [Builder] here to use a [context] that is a descendant of [Scaffold] for showToast to work
-                child: Builder(
-                    builder: (context) => Column(
-                          children: <Widget>[
-                            ListTile(
-                              title: Text('Notifications'),
-                              trailing: Switch(
-                                value: _notificationsEnabled,
-                                onChanged: (value) async {
-                                  setState(() {
-                                    _notificationsEnabled = value;
-                                  });
-                                  _showToast(context, value);
-                                  await _storeNotificationPreferences(value);
-                                },
-                              ),
-                            ),
-                            ListTile(
-                              dense: true,
-                              title: Text(
-                                'Enables hourly notifications until the prayer is completed 15 times daily. Notifications resume at 7 a.m. each day.',
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                            )
-                          ],
-                        )))));
+      ),
+    );
   }
 
   void _showToast(BuildContext context, bool notificationsEnabled) {
     debugPrint(
-        'notification setting set to: ' + notificationsEnabled.toString());
+      'notification setting set to: ' + notificationsEnabled.toString(),
+    );
     final scaffold = ScaffoldMessenger.of(context);
     scaffold.showSnackBar(
       SnackBar(

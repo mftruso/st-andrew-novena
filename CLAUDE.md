@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Flutter app (Android/iOS) that counts recitations of the St. Andrew Novena prayer, which is traditionally prayed 15 times a day from Nov 30 until Christmas. Published on Google Play as `com.miketruso.standrewnovena`. README says it's built with Flutter v3.38.3.
+Flutter app (Android/iOS) that counts recitations of the St. Andrew Novena prayer, which is traditionally prayed 15 times a day from Nov 30 until Christmas. Published on Google Play as `com.miketruso.standrewnovena`. README says it's built with Flutter v3.47.8.
 
 ## Commands
 
@@ -15,7 +15,7 @@ flutter test                                      # run all tests (this is all C
 flutter test test/widget_test.dart                # run one test file
 flutter test --plain-name "skipToday schedules only the following 3 days"   # run one test by name
 flutter test integration_test -d <device>        # on-device notification tests (needs emulator/device; not run in CI)
-dart run build_runner build --delete-conflicting-outputs   # regenerate mockito mocks
+dart run build_runner build                         # regenerate mockito mocks
 flutter build apk && flutter install              # install a build on a connected Android device
 flutter build appbundle                           # Play Store release build
 ```
