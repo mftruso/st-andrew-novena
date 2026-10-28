@@ -14,6 +14,7 @@ flutter run                                       # run on device/emulator
 flutter test                                      # run all tests (this is all CI runs, on every push)
 flutter test test/widget_test.dart                # run one test file
 flutter test --plain-name "skipToday schedules only the following 3 days"   # run one test by name
+flutter test integration_test -d <device>        # on-device notification tests (needs emulator/device; not run in CI)
 dart run build_runner build --delete-conflicting-outputs   # regenerate mockito mocks
 flutter build apk && flutter install              # install a build on a connected Android device
 flutter build appbundle                           # Play Store release build
@@ -39,3 +40,4 @@ All app code is in `lib/` as a few flat files. There is no state-management libr
 
 - `test/notification_service_test.dart` uses `@GenerateMocks([FlutterLocalNotificationsPlugin, NotificationService])`. `notification_service_test.mocks.dart` is generated and committed, so regenerate it with build_runner whenever those class signatures change.
 - `test/widget_test.dart` reuses those mocks. It registers `MockNotificationService` in `GetIt`, calls `SharedPreferences.setMockInitialValues`, and sets the tz location to `America/New_York`.
+- `integration_test/notifications_test.dart` runs on a device against the real plugin and asserts the set of `pendingNotificationRequests()` ids, computed from the real clock. It replicates `main()`'s setup instead of calling it (so `getIt` can be reset between tests) and clears prefs and pending notifications in setUp. On Android, `initialize()` requests POST_NOTIFICATIONS and the second test's request throws `permissionRequestInProgress` unless it's granted. `flutter test` reinstalls the app at the start of the run and uninstalls it at the end, so a grant made beforehand is lost; grant it while the run starts instead: `(until adb shell pm grant com.miketruso.standrewnovena android.permission.POST_NOTIFICATIONS >/dev/null 2>&1; do sleep 0.2; done) & flutter test integration_test -d <device>`.
