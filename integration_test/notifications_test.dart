@@ -1,13 +1,9 @@
 // On-device tests that check what the real flutter_local_notifications plugin
 // has pending. Run with: flutter test integration_test -d <device>
 //
-// On Android, grant the notification permission as the run starts, or the
-// second test's permission request throws permissionRequestInProgress.
-// flutter test reinstalls the app at the start and uninstalls it at the end,
-// so a grant made beforehand doesn't survive:
-//   (until adb shell pm grant com.miketruso.standrewnovena \
-//       android.permission.POST_NOTIFICATIONS >/dev/null 2>&1; do sleep 0.2; done) &
-//   flutter test integration_test -d <device>
+// On Android the app isn't granted the notification permission, so its
+// dialog may stay up during the run; it doesn't block the tests (a repeated
+// request's permissionRequestInProgress error is logged, not thrown).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
