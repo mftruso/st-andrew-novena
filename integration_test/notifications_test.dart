@@ -8,12 +8,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/main.dart';
 import 'package:st_andrew_novena/notificationService.dart';
-import 'package:timezone/data/latest.dart' as tzData;
 import 'package:timezone/timezone.dart' as tz;
 
 /// The notification IDs scheduleNotifications would schedule right now.
@@ -88,16 +86,7 @@ Future<void> launchApp(WidgetTester tester) async {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() async {
-    tzData.initializeTimeZones();
-    try {
-      final String timezone =
-          (await FlutterTimezone.getLocalTimezone()).identifier;
-      tz.setLocalLocation(tz.getLocation(timezone));
-    } on Exception {
-      debugPrint('Could not load local timezone, defaults to UTC');
-    }
-  });
+  setUpAll(initLocalTimezone);
 
   setUp(() async {
     // state persists on the device between tests

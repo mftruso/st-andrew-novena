@@ -14,9 +14,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 
 final getIt = GetIt.instance;
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
+/// Sets tz.local to the device's timezone, falling back to UTC.
+Future<void> initLocalTimezone() async {
   tzData.initializeTimeZones();
   try {
     final String timezone =
@@ -26,6 +25,12 @@ void main() async {
   } on Exception {
     debugPrint('Could not load local timezone, defaults to UTC');
   }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await initLocalTimezone();
 
   // register the singleton service
   getIt.registerSingleton<NotificationService>(NotificationService());
