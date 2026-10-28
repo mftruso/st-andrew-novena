@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -9,7 +10,11 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'notification_service_test.mocks.dart';
 
-@GenerateMocks([FlutterLocalNotificationsPlugin, NotificationService])
+@GenerateMocks([
+  FlutterLocalNotificationsPlugin,
+  AndroidFlutterLocalNotificationsPlugin,
+  NotificationService
+])
 void main() {
   late MockFlutterLocalNotificationsPlugin mockFlutterLocalNotificationsPlugin;
   late tz.Location newYork;
@@ -266,6 +271,36 @@ void main() {
         expect(d.android!.timeoutAfter!, lessThan(60 * 60 * 1000));
         expect(d.iOS?.threadIdentifier, isNotNull);
       }
+    });
+  });
+
+  group('initialize', () {
+    test('a failed permission request does not escape or block initialize',
+        () async {
+      final mockAndroidPlugin = MockAndroidFlutterLocalNotificationsPlugin();
+      when(mockAndroidPlugin.requestNotificationsPermission()).thenAnswer(
+          (_) => Future.error(
+              PlatformException(code: 'permissionRequestInProgress')));
+      when(mockFlutterLocalNotificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                  AndroidFlutterLocalNotificationsPlugin>())
+          .thenReturn(mockAndroidPlugin);
+      when(mockFlutterLocalNotificationsPlugin.initialize(any,
+              onDidReceiveNotificationResponse:
+                  anyNamed('onDidReceiveNotificationResponse')))
+          .thenAnswer((_) async => true);
+
+      await NotificationService(plugin: mockFlutterLocalNotificationsPlugin)
+          .initialize();
+      // Let the permission request's error reach its handler; an unhandled
+      // error here would fail the test.
+      await pumpEventQueue();
+
+      verify(mockAndroidPlugin.requestNotificationsPermission()).called(1);
+      verify(mockFlutterLocalNotificationsPlugin.initialize(any,
+              onDidReceiveNotificationResponse:
+                  anyNamed('onDidReceiveNotificationResponse')))
+          .called(1);
     });
   });
 

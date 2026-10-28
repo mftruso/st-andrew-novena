@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notificationConfig.dart';
@@ -19,10 +20,15 @@ class NotificationService {
         _now = now ?? (() => tz.TZDateTime.now(tz.local));
 
   Future<void> initialize() async {
+    // Not awaited: the dialog would block startup until the user answers it.
     flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+        ?.requestNotificationsPermission()
+        .onError<PlatformException>((e, _) {
+      debugPrint('notification permission request failed: $e');
+      return null;
+    });
 
     var initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notifications_white_18dp');

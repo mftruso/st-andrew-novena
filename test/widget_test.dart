@@ -145,6 +145,29 @@ void main() {
     verify(mockNotificationService.syncNotifications()).called(1);
   });
 
+  testWidgets('reset menu item zeroes the counter and resyncs',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({
+      'notifications_enabled': true,
+      'counter': 15,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    expect(find.text('15'), findsOneWidget);
+    verify(mockNotificationService.syncNotifications()).called(1); // startup
+
+    await tester.tap(find.byType(PopupMenuButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('0'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getInt('counter'), 0);
+    verify(mockNotificationService.syncNotifications()).called(1);
+  });
+
   testWidgets('toggling the notifications setting resyncs',
       (WidgetTester tester) async {
     await tester.pumpWidget(MyApp());

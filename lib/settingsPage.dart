@@ -58,12 +58,12 @@ class _SettingPagesState extends State<SettingsPage> {
                               title: Text('Notifications'),
                               trailing: Switch(
                                 value: _notificationsEnabled,
-                                onChanged: (value) {
+                                onChanged: (value) async {
                                   setState(() {
                                     _notificationsEnabled = value;
-                                    _storeNotificationPreferences(value);
-                                    _showToast(context, value);
                                   });
+                                  _showToast(context, value);
+                                  await _storeNotificationPreferences(value);
                                 },
                               ),
                             ),
