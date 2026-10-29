@@ -11,12 +11,18 @@ import 'package:get_it/get_it.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/notificationService.dart';
+import 'package:st_andrew_novena/prayerBeads.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'package:st_andrew_novena/main.dart';
 
 import 'notification_service_test.mocks.dart';
+
+List<bool> beadsFilled(WidgetTester tester) => [
+  for (var i = 0; i < 15; i++)
+    tester.widget<PrayerBead>(find.byKey(ValueKey('bead-$i'))).filled,
+];
 
 void main() {
   late MockNotificationService mockNotificationService;
@@ -202,5 +208,42 @@ void main() {
     verify(mockNotificationService.syncNotifications()).called(1);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('notifications_enabled'), isTrue);
+  });
+
+  testWidgets('each Amen fills one more bead', (WidgetTester tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    expect(beadsFilled(tester), everyElement(isFalse));
+
+    for (var i = 0; i < 7; i++) {
+      await tester.tap(find.text('Amen'));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('7'), findsOneWidget);
+    expect(beadsFilled(tester), [
+      ...List.filled(7, true),
+      ...List.filled(8, false),
+    ]);
+    expect(find.bySemanticsLabel('7 of 15 prayers'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('the count keeps going past 15 with every bead filled', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'counter': 15,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('16'), findsOneWidget);
+    expect(beadsFilled(tester), everyElement(isTrue));
   });
 }

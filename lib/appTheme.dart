@@ -4,6 +4,24 @@ import 'package:material_ui/material_ui.dart';
 const novenaRed = Color(0xFF9f382b);
 const parchment = Color(0xFFe6cb9e);
 
+/// Colors the ColorScheme has no slot for.
+class NovenaColors extends ThemeExtension<NovenaColors> {
+  const NovenaColors({required this.bead});
+
+  final Color bead;
+
+  @override
+  NovenaColors copyWith({Color? bead}) {
+    return NovenaColors(bead: bead ?? this.bead);
+  }
+
+  @override
+  NovenaColors lerp(NovenaColors? other, double t) {
+    if (other == null) return this;
+    return NovenaColors(bead: Color.lerp(bead, other.bead, t)!);
+  }
+}
+
 ThemeData lightTheme() {
   return _theme(
     ColorScheme.fromSeed(
@@ -11,10 +29,11 @@ ThemeData lightTheme() {
       primary: novenaRed,
       surface: parchment,
     ),
+    const NovenaColors(bead: novenaRed),
   );
 }
 
-ThemeData _theme(ColorScheme scheme) {
+ThemeData _theme(ColorScheme scheme, NovenaColors novenaColors) {
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
   // base.textTheme carries only colors; weights and sizes come from the
   // geometry, which must be merged in before google_fonts picks variants.
@@ -27,6 +46,7 @@ ThemeData _theme(ColorScheme scheme) {
 
   return base.copyWith(
     textTheme: textTheme,
+    extensions: [novenaColors],
     appBarTheme: AppBarTheme(
       backgroundColor: scheme.primary,
       foregroundColor: scheme.onPrimary,

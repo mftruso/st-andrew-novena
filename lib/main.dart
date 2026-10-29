@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/appTheme.dart';
 import 'package:st_andrew_novena/notificationService.dart';
+import 'package:st_andrew_novena/prayerBeads.dart';
 import 'package:st_andrew_novena/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -143,6 +144,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _incrementCounter() async {
+    HapticFeedback.lightImpact();
     final prefs = await SharedPreferences.getInstance();
     int counter = (prefs.getInt('counter') ?? 0) + 1;
     await prefs.setInt('counter', counter);
@@ -219,7 +221,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Column(
             children: <Widget>[
-              Text('$_counter', style: textTheme.headlineSmall),
+              PrayerBeads(count: _counter),
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
