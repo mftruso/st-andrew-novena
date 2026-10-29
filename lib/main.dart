@@ -222,6 +222,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           child: Column(
             children: <Widget>[
               PrayerBeads(count: _counter),
+              SizedBox(
+                height: 40,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: _counter >= 15 ? const CompletedBadge() : null,
+                ),
+              ),
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(

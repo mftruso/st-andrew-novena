@@ -6,19 +6,25 @@ const parchment = Color(0xFFe6cb9e);
 
 /// Colors the ColorScheme has no slot for.
 class NovenaColors extends ThemeExtension<NovenaColors> {
-  const NovenaColors({required this.bead});
+  const NovenaColors({required this.bead, required this.gold});
 
   final Color bead;
 
+  /// Beads and star once today's prayers are complete.
+  final Color gold;
+
   @override
-  NovenaColors copyWith({Color? bead}) {
-    return NovenaColors(bead: bead ?? this.bead);
+  NovenaColors copyWith({Color? bead, Color? gold}) {
+    return NovenaColors(bead: bead ?? this.bead, gold: gold ?? this.gold);
   }
 
   @override
   NovenaColors lerp(NovenaColors? other, double t) {
     if (other == null) return this;
-    return NovenaColors(bead: Color.lerp(bead, other.bead, t)!);
+    return NovenaColors(
+      bead: Color.lerp(bead, other.bead, t)!,
+      gold: Color.lerp(gold, other.gold, t)!,
+    );
   }
 }
 
@@ -29,7 +35,7 @@ ThemeData lightTheme() {
       primary: novenaRed,
       surface: parchment,
     ),
-    const NovenaColors(bead: novenaRed),
+    const NovenaColors(bead: novenaRed, gold: Color(0xFFB8860B)),
   );
 }
 

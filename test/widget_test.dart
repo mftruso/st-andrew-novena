@@ -246,4 +246,26 @@ void main() {
     expect(find.text('16'), findsOneWidget);
     expect(beadsFilled(tester), everyElement(isTrue));
   });
+
+  testWidgets('15th prayer shows completed for today, 14th does not', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'notifications_enabled': false,
+      'counter': 13,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+    expect(find.text('14'), findsOneWidget);
+    expect(find.text('Completed for today'), findsNothing);
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+    expect(find.text('15'), findsOneWidget);
+    expect(find.text('Completed for today'), findsOneWidget);
+  });
 }

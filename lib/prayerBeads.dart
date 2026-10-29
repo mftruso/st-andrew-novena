@@ -19,6 +19,7 @@ class PrayerBeads extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.extension<NovenaColors>()!;
     const radius = (_ringSize - _beadSize) / 2;
+    final complete = count >= total;
 
     return Semantics(
       label: '$count of $total prayers',
@@ -35,7 +36,8 @@ class PrayerBeads extends StatelessWidget {
                 child: PrayerBead(
                   key: ValueKey('bead-$i'),
                   filled: i < count,
-                  color: colors.bead,
+                  color: complete ? colors.gold : colors.bead,
+                  glow: complete,
                 ),
               ),
             Center(
@@ -65,10 +67,16 @@ class PrayerBeads extends StatelessWidget {
 }
 
 class PrayerBead extends StatelessWidget {
-  const PrayerBead({super.key, required this.filled, required this.color});
+  const PrayerBead({
+    super.key,
+    required this.filled,
+    required this.color,
+    this.glow = false,
+  });
 
   final bool filled;
   final Color color;
+  final bool glow;
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +95,32 @@ class PrayerBead extends StatelessWidget {
           color: color.withValues(alpha: filled ? 1 : 0.5),
           width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: glow ? 0.6 : 0),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// Shown under the beads once today's 15 prayers are done.
+class CompletedBadge extends StatelessWidget {
+  const CompletedBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.star_rounded, color: theme.extension<NovenaColors>()!.gold),
+        const SizedBox(width: 6),
+        Text('Completed for today', style: theme.textTheme.titleMedium),
+      ],
     );
   }
 }
