@@ -13,7 +13,6 @@ class _AboutPageState extends State<AboutPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('About'),
-        backgroundColor: Theme.of(context).colorScheme.surface,
         automaticallyImplyLeading: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
