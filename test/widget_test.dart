@@ -5,7 +5,7 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mockito/mockito.dart';
@@ -28,9 +28,11 @@ void main() {
 
     mockNotificationService = MockNotificationService();
     when(mockNotificationService.initialize()).thenAnswer((_) async => {});
-    when(mockNotificationService.scheduleNotifications(
-            skipToday: anyNamed('skipToday')))
-        .thenAnswer((_) async => {});
+    when(
+      mockNotificationService.scheduleNotifications(
+        skipToday: anyNamed('skipToday'),
+      ),
+    ).thenAnswer((_) async => {});
     when(mockNotificationService.cancelAllNotifications())
         .thenAnswer((_) async => {});
     when(mockNotificationService.syncNotifications())
@@ -65,8 +67,9 @@ void main() {
     expect(find.text('1'), findsOneWidget);
   });
 
-  testWidgets('launch initializes then syncs notifications',
-      (WidgetTester tester) async {
+  testWidgets('launch initializes then syncs notifications', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(MyApp());
     await tester.pumpAndSettle();
 
@@ -76,8 +79,9 @@ void main() {
     ]);
   });
 
-  testWidgets('15th prayer with notifications enabled resyncs notifications',
-      (WidgetTester tester) async {
+  testWidgets('15th prayer with notifications enabled resyncs notifications', (
+    WidgetTester tester,
+  ) async {
     SharedPreferences.setMockInitialValues({
       'notifications_enabled': true,
       'counter': 14,
@@ -94,14 +98,20 @@ void main() {
     expect(find.text('15'), findsOneWidget);
     verify(mockNotificationService.syncNotifications()).called(1);
     verifyNever(mockNotificationService.cancelAllNotifications());
-    verifyNever(mockNotificationService.scheduleNotifications(
-        skipToday: anyNamed('skipToday')));
-    expect(find.text('Prayers complete! Notifications will resume tomorrow.'),
-        findsOneWidget);
+    verifyNever(
+      mockNotificationService.scheduleNotifications(
+        skipToday: anyNamed('skipToday'),
+      ),
+    );
+    expect(
+      find.text('Prayers complete! Notifications will resume tomorrow.'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('15th prayer with notifications disabled schedules nothing',
-      (WidgetTester tester) async {
+  testWidgets('15th prayer with notifications disabled schedules nothing', (
+    WidgetTester tester,
+  ) async {
     SharedPreferences.setMockInitialValues({
       'notifications_enabled': false,
       'counter': 14,
@@ -117,12 +127,16 @@ void main() {
     expect(find.text('15'), findsOneWidget);
     verifyNever(mockNotificationService.syncNotifications());
     verifyNever(mockNotificationService.cancelAllNotifications());
-    verifyNever(mockNotificationService.scheduleNotifications(
-        skipToday: anyNamed('skipToday')));
+    verifyNever(
+      mockNotificationService.scheduleNotifications(
+        skipToday: anyNamed('skipToday'),
+      ),
+    );
   });
 
-  testWidgets('resuming on a new day resets the counter and resyncs',
-      (WidgetTester tester) async {
+  testWidgets('resuming on a new day resets the counter and resyncs', (
+    WidgetTester tester,
+  ) async {
     SharedPreferences.setMockInitialValues({
       'notifications_enabled': true,
       'counter': 7,
@@ -135,8 +149,10 @@ void main() {
 
     // the app sat in the background overnight
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('last_updated',
-        DateTime.now().subtract(const Duration(days: 1)).toString());
+    await prefs.setString(
+      'last_updated',
+      DateTime.now().subtract(const Duration(days: 1)).toString(),
+    );
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
@@ -145,8 +161,9 @@ void main() {
     verify(mockNotificationService.syncNotifications()).called(1);
   });
 
-  testWidgets('reset menu item zeroes the counter and resyncs',
-      (WidgetTester tester) async {
+  testWidgets('reset menu item zeroes the counter and resyncs', (
+    WidgetTester tester,
+  ) async {
     SharedPreferences.setMockInitialValues({
       'notifications_enabled': true,
       'counter': 15,
@@ -168,8 +185,9 @@ void main() {
     verify(mockNotificationService.syncNotifications()).called(1);
   });
 
-  testWidgets('toggling the notifications setting resyncs',
-      (WidgetTester tester) async {
+  testWidgets('toggling the notifications setting resyncs', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(MyApp());
     await tester.pumpAndSettle();
     clearInteractions(mockNotificationService);

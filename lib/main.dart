@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/notificationService.dart';
@@ -16,17 +14,23 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 
 final getIt = GetIt.instance;
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
+/// Sets tz.local to the device's timezone, falling back to UTC.
+Future<void> initLocalTimezone() async {
   tzData.initializeTimeZones();
   try {
-    final String timezone = await FlutterTimezone.getLocalTimezone();
+    final String timezone =
+        (await FlutterTimezone.getLocalTimezone()).identifier;
     debugPrint('Local Timezone: ' + timezone);
     tz.setLocalLocation(tz.getLocation(timezone));
   } on Exception {
     debugPrint('Could not load local timezone, defaults to UTC');
   }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await initLocalTimezone();
 
   // register the singleton service
   getIt.registerSingleton<NotificationService>(NotificationService());
@@ -42,23 +46,24 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'St. Andrew Novena',
       theme: ThemeData(
-          colorScheme: ColorScheme(
-            brightness: Brightness.light,
-            primary: Color(0xFF9f382b),
-            onPrimary: Colors.red,
-            primaryContainer: Colors.grey,
-            secondary: Colors.red,
-            secondaryContainer: Colors.grey,
-            onSecondary: Colors.red,
-            surface: Color(0xFFe6cb9e),
-            onSurface: Colors.black,
-            error: Colors.redAccent,
-            onError: Colors.white,
-          ),
-          appBarTheme: AppBarTheme(color: Colors.amber),
-          useMaterial3: true,
-          textTheme: GoogleFonts.montserratTextTheme(textTheme)
-              .copyWith(bodySmall: TextStyle(fontSize: 20))),
+        colorScheme: ColorScheme(
+          brightness: Brightness.light,
+          primary: Color(0xFF9f382b),
+          onPrimary: Colors.red,
+          primaryContainer: Colors.grey,
+          secondary: Colors.red,
+          secondaryContainer: Colors.grey,
+          onSecondary: Colors.red,
+          surface: Color(0xFFe6cb9e),
+          onSurface: Colors.black,
+          error: Colors.redAccent,
+          onError: Colors.white,
+        ),
+        appBarTheme: AppBarTheme(backgroundColor: Colors.amber),
+        useMaterial3: true,
+        textTheme: GoogleFonts.montserratTextTheme(textTheme)
+            .copyWith(bodySmall: TextStyle(fontSize: 20)),
+      ),
       home: MyHomePage(title: 'St. Andrew Novena'),
     );
   }
@@ -72,9 +77,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-enum Screens {
-  settings,
-}
+enum Screens { settings }
 
 class ScreenNavigator {
   static Widget getScreenWidget(String screenString) {
@@ -86,8 +89,6 @@ class ScreenNavigator {
     switch (screen) {
       case Screens.settings:
         return SettingsPage();
-      default:
-        return Container();
     }
   }
 }
@@ -172,7 +173,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final scaffold = ScaffoldMessenger.of(context);
     scaffold.showSnackBar(
       SnackBar(
-        content: const Text('Prayers complete! Notifications will resume tomorrow.'),
+        content: const Text(
+          'Prayers complete! Notifications will resume tomorrow.',
+        ),
       ),
     );
   }
@@ -195,28 +198,30 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(widget.title, style: GoogleFonts.montserrat()),
         backgroundColor: Theme.of(context).colorScheme.primary,
         actions: <Widget>[
           PopupMenuButton(
-              onSelected: (result) {
-                if (result == 'reset') {
-                  _resetCounterAndResync();
-                } else {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              ScreenNavigator.getScreenWidget(result as String)));
-                }
-              },
-              itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                    const PopupMenuItem(child: Text('Reset'), value: 'reset'),
-                    const PopupMenuItem(
-                        child: Text('Settings'), value: 'settings'),
-                  ])
+            onSelected: (result) {
+              if (result == 'reset') {
+                _resetCounterAndResync();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ScreenNavigator.getScreenWidget(result as String),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+              const PopupMenuItem(child: Text('Reset'), value: 'reset'),
+              const PopupMenuItem(child: Text('Settings'), value: 'settings'),
+            ],
+          ),
         ],
       ),
       body: Center(
@@ -225,20 +230,28 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
-              Text('$_counter',
-                  style: Theme.of(context).textTheme.headlineSmall),
+              Text(
+                '$_counter',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
               Container(
                 child: Column(
                   children: [
                     Text(
-                        'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
-                        style: Theme.of(context).textTheme.bodySmall),
-                    Text('[name your intention]',
-                        style: TextStyle(
-                            fontStyle: FontStyle.italic, fontSize: 18)),
+                      'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     Text(
-                        'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                        style: Theme.of(context).textTheme.bodySmall),
+                      '[name your intention]',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 18,
+                      ),
+                    ),
+                    Text(
+                      'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),
@@ -247,14 +260,17 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 child: ElevatedButton(
                   onPressed: _incrementCounter,
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade100),
-                  child: Text('Amen',
-                      style: TextStyle(
-                          fontSize:
-                              Theme.of(context).textTheme.bodySmall?.fontSize,
-                          color: Theme.of(context).colorScheme.primary)),
+                    backgroundColor: Colors.grey.shade100,
+                  ),
+                  child: Text(
+                    'Amen',
+                    style: TextStyle(
+                      fontSize: Theme.of(context).textTheme.bodySmall?.fontSize,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 ),
-              )
+              ),
             ],
           ),
         ),

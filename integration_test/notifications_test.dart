@@ -5,15 +5,13 @@
 // dialog may stay up during the run; it doesn't block the tests (a repeated
 // request's permissionRequestInProgress error is logged, not thrown).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/main.dart';
 import 'package:st_andrew_novena/notificationService.dart';
-import 'package:timezone/data/latest.dart' as tzData;
 import 'package:timezone/timezone.dart' as tz;
 
 /// The notification IDs scheduleNotifications would schedule right now.
@@ -22,8 +20,13 @@ Set<int> expectedIds({bool skipToday = false}) {
   final Set<int> ids = {};
   for (int day = skipToday ? 1 : 0; day < notificationDays; day++) {
     for (int slot = 0; slot < notificationsPerDay; slot++) {
-      final tz.TZDateTime scheduledTime =
-          tz.TZDateTime(tz.local, now.year, now.month, now.day + day, 7 + slot);
+      final tz.TZDateTime scheduledTime = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day + day,
+        7 + slot,
+      );
       if (scheduledTime.isAfter(now)) {
         ids.add(day * notificationsPerDay + slot);
       }
@@ -33,8 +36,8 @@ Set<int> expectedIds({bool skipToday = false}) {
 }
 
 Future<Set<int>> pendingIds() async {
-  final requests =
-      await FlutterLocalNotificationsPlugin().pendingNotificationRequests();
+  final requests = await FlutterLocalNotificationsPlugin()
+      .pendingNotificationRequests();
   return requests.map((r) => r.id).toSet();
 }
 
@@ -45,8 +48,10 @@ Future<Set<int>> pendingIds() async {
 /// only if the run straddled the top of an hour, in which case the slot that
 /// just passed may or may not still be pending, so the pending set must lie
 /// between them.
-Future<Set<int>> waitForPending(Set<int> before,
-    {bool skipToday = false}) async {
+Future<Set<int>> waitForPending(
+  Set<int> before, {
+  bool skipToday = false,
+}) async {
   Set<int> pending = {};
   for (int i = 0; i < 50; i++) {
     pending = await pendingIds();
@@ -81,15 +86,7 @@ Future<void> launchApp(WidgetTester tester) async {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() async {
-    tzData.initializeTimeZones();
-    try {
-      final String timezone = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(timezone));
-    } on Exception {
-      debugPrint('Could not load local timezone, defaults to UTC');
-    }
-  });
+  setUpAll(initLocalTimezone);
 
   setUp(() async {
     // state persists on the device between tests
@@ -102,8 +99,9 @@ void main() {
     await getIt.reset();
   });
 
-  testWidgets('enabling notifications schedules the rolling window',
-      (WidgetTester tester) async {
+  testWidgets('enabling notifications schedules the rolling window', (
+    WidgetTester tester,
+  ) async {
     await launchApp(tester);
     expect(await pendingIds(), isEmpty);
 
@@ -120,8 +118,9 @@ void main() {
     expect(prefs.getBool('notifications_enabled'), isTrue);
   });
 
-  testWidgets("praying 15 times clears today's reminders",
-      (WidgetTester tester) async {
+  testWidgets("praying 15 times clears today's reminders", (
+    WidgetTester tester,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications_enabled', true);
 
@@ -137,18 +136,26 @@ void main() {
     }
 
     expect(find.text('15'), findsOneWidget);
-    await pumpUntilFound(tester,
-        find.text('Prayers complete! Notifications will resume tomorrow.'));
-    expect(find.text('Prayers complete! Notifications will resume tomorrow.'),
-        findsOneWidget);
+    await pumpUntilFound(
+      tester,
+      find.text('Prayers complete! Notifications will resume tomorrow.'),
+    );
+    expect(
+      find.text('Prayers complete! Notifications will resume tomorrow.'),
+      findsOneWidget,
+    );
     final Set<int> daysOneToThree = {
-      for (int id = notificationsPerDay;
-          id < notificationDays * notificationsPerDay;
-          id++)
-        id
+      for (
+        int id = notificationsPerDay;
+        id < notificationDays * notificationsPerDay;
+        id++
+      )
+        id,
     };
     expect(expectedIds(skipToday: true), daysOneToThree);
-    expect(await waitForPending(daysOneToThree, skipToday: true),
-        daysOneToThree);
+    expect(
+      await waitForPending(daysOneToThree, skipToday: true),
+      daysOneToThree,
+    );
   });
 }

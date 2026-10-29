@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Flutter app (Android/iOS) that counts recitations of the St. Andrew Novena prayer, which is traditionally prayed 15 times a day from Nov 30 until Christmas. Published on Google Play as `com.miketruso.standrewnovena`. README says it's built with Flutter v3.38.3.
+Flutter app (Android/iOS) that counts recitations of the St. Andrew Novena prayer, which is traditionally prayed 15 times a day from Nov 30 until Christmas. Published on Google Play as `com.miketruso.standrewnovena`. README says it's built with Flutter v3.47.8.
 
 ## Commands
 
@@ -15,7 +15,7 @@ flutter test                                      # run all tests (this is all C
 flutter test test/widget_test.dart                # run one test file
 flutter test --plain-name "skipToday schedules only the following 3 days"   # run one test by name
 flutter test integration_test -d <device>        # on-device notification tests (needs emulator/device; not run in CI)
-dart run build_runner build --delete-conflicting-outputs   # regenerate mockito mocks
+dart run build_runner build                         # regenerate mockito mocks
 flutter build apk && flutter install              # install a build on a connected Android device
 flutter build appbundle                           # Play Store release build
 ```
@@ -40,4 +40,5 @@ All app code is in `lib/` as a few flat files. There is no state-management libr
 
 - `test/notification_service_test.dart` uses `@GenerateMocks([FlutterLocalNotificationsPlugin, AndroidFlutterLocalNotificationsPlugin, NotificationService])`. `notification_service_test.mocks.dart` is generated and committed, so regenerate it with build_runner whenever those class signatures change.
 - `test/widget_test.dart` reuses those mocks. It registers `MockNotificationService` in `GetIt`, calls `SharedPreferences.setMockInitialValues`, and sets the tz location to `America/New_York`.
-- `integration_test/notifications_test.dart` runs on a device against the real plugin and asserts the set of `pendingNotificationRequests()` ids, computed from the real clock. It replicates `main()`'s setup instead of calling it (so `getIt` can be reset between tests) and clears prefs and pending notifications in setUp. On Android, `initialize()` requests POST_NOTIFICATIONS without awaiting it; the dialog may stay up during the run and doesn't block the tests (later requests' `permissionRequestInProgress` errors are logged, not thrown), so no grant is needed: `flutter test integration_test -d <device>`.
+- `integration_test/notifications_test.dart` runs on a device against the real plugin and asserts the set of `pendingNotificationRequests()` ids, computed from the real clock. It shares `main()`'s timezone setup (`initLocalTimezone()`) but registers the service itself instead of calling `main()` (so `getIt` can be reset between tests) and clears prefs and pending notifications in setUp. On Android, `initialize()` requests POST_NOTIFICATIONS without awaiting it; the dialog may stay up during the run and doesn't block the tests (later requests' `permissionRequestInProgress` errors are logged, not thrown), so no grant is needed: `flutter test integration_test -d <device>`.
+- `integration_test/ios_foreground_notification_test.dart` (iOS only, skipped elsewhere) shows a notification while the app is in the foreground and checks that it's delivered, which proves `AppDelegate`'s `UNUserNotificationCenter` delegate reaches the plugin under the UIScene lifecycle. It asks for provisional authorization, so no prompt needs answering on a simulator.

@@ -1,46 +1,55 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'notificationConfig.dart';
+
 import 'package:timezone/timezone.dart' as tz;
 
 const int notificationsPerDay = 15;
 const int notificationDays = 4;
-const int maxPendingNotifications = 64; // iOS per-app cap on pending local notifications
+const int maxPendingNotifications =
+    64; // iOS per-app cap on pending local notifications
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   final tz.TZDateTime Function() _now;
 
-  NotificationService(
-      {FlutterLocalNotificationsPlugin? plugin, tz.TZDateTime Function()? now})
-      : flutterLocalNotificationsPlugin =
-            plugin ?? FlutterLocalNotificationsPlugin(),
-        _now = now ?? (() => tz.TZDateTime.now(tz.local));
+  NotificationService({
+    FlutterLocalNotificationsPlugin? plugin,
+    tz.TZDateTime Function()? now,
+  }) : flutterLocalNotificationsPlugin =
+           plugin ?? FlutterLocalNotificationsPlugin(),
+       _now = now ?? (() => tz.TZDateTime.now(tz.local));
 
   Future<void> initialize() async {
     // Not awaited: the dialog would block startup until the user answers it.
     flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission()
         .onError<PlatformException>((e, _) {
-      debugPrint('notification permission request failed: $e');
-      return null;
-    });
+          debugPrint('notification permission request failed: $e');
+          return null;
+        });
 
-    var initializationSettingsAndroid =
-        AndroidInitializationSettings('ic_notifications_white_18dp');
+    var initializationSettingsAndroid = AndroidInitializationSettings(
+      'ic_notifications_white_18dp',
+    );
     final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings();
 
     final InitializationSettings initializationSettings =
         InitializationSettings(
-            android: initializationSettingsAndroid,
-            iOS: initializationSettingsDarwin);
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsDarwin,
+        );
+    await flutterLocalNotificationsPlugin.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+    );
   }
 
   void onDidReceiveNotificationResponse(NotificationResponse? response) {
@@ -62,17 +71,22 @@ class NotificationService {
       }
       for (int slot = 0; slot < notificationsPerDay; slot++) {
         final tz.TZDateTime scheduledTime = tz.TZDateTime(
-            tz.local, now.year, now.month, now.day + day, 7 + slot);
+          tz.local,
+          now.year,
+          now.month,
+          now.day + day,
+          7 + slot,
+        );
         if (!scheduledTime.isAfter(now)) {
           continue;
         }
         final int id = day * notificationsPerDay + slot;
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          id,
-          notificationTitle,
-          notificationBody,
-          scheduledTime,
-          platformChannelSpecifics,
+          id: id,
+          title: notificationTitle,
+          body: notificationBody,
+          scheduledDate: scheduledTime,
+          notificationDetails: platformChannelSpecifics,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
         debugPrint('scheduled notification $id for $scheduledTime');

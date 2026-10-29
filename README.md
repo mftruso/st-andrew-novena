@@ -22,7 +22,7 @@ Pretty simple! Just like this prayer.
 
 ## Development
 
-Built with [Flutter](https://flutter.dev/) v3.38.3
+Built with [Flutter](https://flutter.dev/) v3.47.8
 
 ```
 flutter doctor
