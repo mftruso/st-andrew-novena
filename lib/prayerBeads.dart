@@ -7,6 +7,14 @@ import 'appTheme.dart';
 const _beadSize = 18.0;
 const _ringSize = 184.0;
 
+double textScale(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(16) / 16;
+
+/// The count fits inside the ring up to 2x text, so it only grows past that
+/// (iOS accessibility sizes).
+double ringScale(BuildContext context) =>
+    (textScale(context) / 2).clamp(1.0, 1.5);
+
 /// A ring of [total] beads, one filled per prayer, with the count inside.
 class PrayerBeads extends StatelessWidget {
   const PrayerBeads({super.key, required this.count, this.total = 15});
@@ -18,14 +26,15 @@ class PrayerBeads extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.extension<NovenaColors>()!;
-    const radius = (_ringSize - _beadSize) / 2;
+    final ringSize = _ringSize * ringScale(context);
+    final radius = (ringSize - _beadSize) / 2;
     final complete = count >= total;
 
     return Semantics(
       label: '$count of $total prayers',
       excludeSemantics: true,
       child: SizedBox.square(
-        dimension: _ringSize,
+        dimension: ringSize,
         child: Stack(
           children: [
             for (var i = 0; i < total; i++)
@@ -37,6 +46,7 @@ class PrayerBeads extends StatelessWidget {
                   key: ValueKey('bead-$i'),
                   filled: i < count,
                   color: complete ? colors.gold : colors.bead,
+                  outline: theme.colorScheme.onSurfaceVariant,
                   glow: complete ? colors.glow : null,
                 ),
               ),
@@ -71,11 +81,15 @@ class PrayerBead extends StatelessWidget {
     super.key,
     required this.filled,
     required this.color,
+    required this.outline,
     this.glow,
   });
 
   final bool filled;
   final Color color;
+
+  /// Border of an empty bead, strong enough to see against the background.
+  final Color outline;
   final Color? glow;
 
   @override
@@ -90,12 +104,29 @@ class PrayerBead extends StatelessWidget {
       transform: Matrix4.diagonal3Values(scale, scale, 1),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: filled ? color : color.withValues(alpha: 0),
+        // lit from the top left, so a filled bead reads as round
+        gradient: filled
+            ? RadialGradient(
+                center: const Alignment(-0.35, -0.45),
+                radius: 0.9,
+                colors: [
+                  Color.lerp(color, Colors.white, 0.45)!,
+                  color,
+                  Color.lerp(color, Colors.black, 0.3)!,
+                ],
+                stops: const [0, 0.5, 1],
+              )
+            : null,
         border: Border.all(
-          color: color.withValues(alpha: filled ? 1 : 0.5),
-          width: 1.5,
+          color: filled ? Color.lerp(color, Colors.black, 0.3)! : outline,
+          width: filled ? 0.5 : 1.25,
         ),
         boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: filled ? 0.3 : 0),
+            offset: const Offset(0, 1.5),
+            blurRadius: 2.5,
+          ),
           BoxShadow(
             color: (glow ?? color).withValues(alpha: glow == null ? 0 : 0.7),
             blurRadius: 8,

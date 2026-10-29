@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/appTheme.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 import 'package:st_andrew_novena/prayerBeads.dart';
-import 'package:st_andrew_novena/starWatermark.dart';
 import 'package:st_andrew_novena/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -192,7 +191,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final colors = theme.extension<NovenaColors>()!;
 
     return Scaffold(
       appBar: AppBar(
@@ -219,55 +220,61 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            children: <Widget>[
-              PrayerBeads(count: _counter),
-              SizedBox(
-                height: 40,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: _counter >= 15 ? const CompletedBadge() : null,
-                ),
-              ),
-              Expanded(
-                child: CustomPaint(
-                  painter: StarWatermark(
-                    Theme.of(context).colorScheme.onSurface,
+      body: DecoratedBox(
+        // candlelight: brightest around the ring, falling off to the edges
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: const Alignment(0, -0.6),
+            radius: 1.2,
+            colors: [colors.halo, theme.colorScheme.surface, colors.vignette],
+            stops: const [0, 0.55, 1],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Column(
+              children: <Widget>[
+                // about the same gap as below the ring, where the badge sits
+                const SizedBox(height: 36),
+                PrayerBeads(count: _counter),
+                SizedBox(
+                  height: 24 + 24 * textScale(context),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: _counter >= 15 ? const CompletedBadge() : null,
                   ),
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
-                            style: textTheme.bodyLarge,
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            '[name your intention]',
-                            style: intentionStyle(textTheme),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                            style: textTheme.bodyLarge,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
+                          style: textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          '[name your intention]',
+                          style: intentionStyle(textTheme),
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
+                          style: textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              FilledButton(
-                onPressed: _incrementCounter,
-                child: const Text('Amen'),
-              ),
-            ],
+                FilledButton(
+                  onPressed: _incrementCounter,
+                  child: const Text('Amen'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

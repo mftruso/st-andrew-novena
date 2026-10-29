@@ -283,4 +283,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('1'), findsOneWidget);
   });
+
+  testWidgets('lays out without overflow at 200% text size', (
+    WidgetTester tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    SharedPreferences.setMockInitialValues({
+      'counter': 15,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    // a RenderFlex overflow would fail the test with an exception
+    expect(tester.takeException(), isNull);
+    expect(find.text('15'), findsOneWidget);
+    expect(find.text('Completed for today'), findsOneWidget);
+  });
 }
