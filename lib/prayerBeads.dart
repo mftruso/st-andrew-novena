@@ -37,7 +37,7 @@ class PrayerBeads extends StatelessWidget {
                   key: ValueKey('bead-$i'),
                   filled: i < count,
                   color: complete ? colors.gold : colors.bead,
-                  glow: complete,
+                  glow: complete ? colors.glow : null,
                 ),
               ),
             Center(
@@ -71,12 +71,12 @@ class PrayerBead extends StatelessWidget {
     super.key,
     required this.filled,
     required this.color,
-    this.glow = false,
+    this.glow,
   });
 
   final bool filled;
   final Color color;
-  final bool glow;
+  final Color? glow;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +97,7 @@ class PrayerBead extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: glow ? 0.6 : 0),
+            color: (glow ?? color).withValues(alpha: glow == null ? 0 : 0.7),
             blurRadius: 8,
             spreadRadius: 1,
           ),

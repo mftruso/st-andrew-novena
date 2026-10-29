@@ -268,4 +268,19 @@ void main() {
     expect(find.text('15'), findsOneWidget);
     expect(find.text('Completed for today'), findsOneWidget);
   });
+
+  testWidgets('follows the system dark theme', (WidgetTester tester) async {
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    expect(
+      Theme.of(tester.element(find.text('Amen'))).brightness,
+      Brightness.dark,
+    );
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+    expect(find.text('1'), findsOneWidget);
+  });
 }

@@ -6,16 +6,25 @@ const parchment = Color(0xFFe6cb9e);
 
 /// Colors the ColorScheme has no slot for.
 class NovenaColors extends ThemeExtension<NovenaColors> {
-  const NovenaColors({required this.bead, required this.gold});
+  const NovenaColors({
+    required this.bead,
+    required this.gold,
+    required this.glow,
+  });
 
   final Color bead;
 
-  /// Beads and star once today's prayers are complete.
+  /// Beads and star once today's prayers are complete, with their [glow].
   final Color gold;
+  final Color glow;
 
   @override
-  NovenaColors copyWith({Color? bead, Color? gold}) {
-    return NovenaColors(bead: bead ?? this.bead, gold: gold ?? this.gold);
+  NovenaColors copyWith({Color? bead, Color? gold, Color? glow}) {
+    return NovenaColors(
+      bead: bead ?? this.bead,
+      gold: gold ?? this.gold,
+      glow: glow ?? this.glow,
+    );
   }
 
   @override
@@ -24,6 +33,7 @@ class NovenaColors extends ThemeExtension<NovenaColors> {
     return NovenaColors(
       bead: Color.lerp(bead, other.bead, t)!,
       gold: Color.lerp(gold, other.gold, t)!,
+      glow: Color.lerp(glow, other.glow, t)!,
     );
   }
 }
@@ -35,7 +45,39 @@ ThemeData lightTheme() {
       primary: novenaRed,
       surface: parchment,
     ),
-    const NovenaColors(bead: novenaRed, gold: Color(0xFFB8860B)),
+    const NovenaColors(
+      bead: novenaRed,
+      gold: Color(0xFF8A6508),
+      glow: Color(0xFFFFC94A),
+    ),
+  );
+}
+
+const _midnight = Color(0xFF0E1628);
+const _warmGold = Color(0xFFE9D3A0);
+
+ThemeData darkTheme() {
+  return _theme(
+    ColorScheme.fromSeed(
+      seedColor: novenaRed,
+      brightness: Brightness.dark,
+      // a touch lighter than novenaRed so it holds up against the navy
+      primary: const Color(0xFFB5443A),
+      onPrimary: Colors.white,
+      surface: _midnight,
+      onSurface: _warmGold,
+      onSurfaceVariant: const Color(0xFFC2AE80),
+      surfaceContainerLowest: const Color(0xFF0A1120),
+      surfaceContainerLow: const Color(0xFF131C30),
+      surfaceContainer: const Color(0xFF172238),
+      surfaceContainerHigh: const Color(0xFF1C2840),
+      surfaceContainerHighest: const Color(0xFF22304A),
+    ),
+    const NovenaColors(
+      bead: Color(0xFFD9B45A),
+      gold: Color(0xFFFFD86B),
+      glow: Color(0xFFFFD86B),
+    ),
   );
 }
 
@@ -43,7 +85,9 @@ ThemeData _theme(ColorScheme scheme, NovenaColors novenaColors) {
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
   // base.textTheme carries only colors; weights and sizes come from the
   // geometry, which must be merged in before google_fonts picks variants.
-  final baseText = base.typography.englishLike.merge(base.textTheme);
+  final baseText = base.typography.englishLike
+      .merge(base.textTheme)
+      .apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface);
   final textTheme = GoogleFonts.ebGaramondTextTheme(
     baseText.copyWith(
       bodyLarge: baseText.bodyLarge?.copyWith(fontSize: 21, height: 1.5),

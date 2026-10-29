@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/appTheme.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 import 'package:st_andrew_novena/prayerBeads.dart';
+import 'package:st_andrew_novena/starWatermark.dart';
 import 'package:st_andrew_novena/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -55,6 +56,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'St. Andrew Novena',
       theme: lightTheme(),
+      darkTheme: darkTheme(),
+      themeMode: ThemeMode.system,
       home: MyHomePage(title: 'St. Andrew Novena'),
     );
   }
@@ -230,27 +233,32 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 ),
               ),
               Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
-                          style: textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        Text(
-                          '[name your intention]',
-                          style: intentionStyle(textTheme),
-                          textAlign: TextAlign.center,
-                        ),
-                        Text(
-                          'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                          style: textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                child: CustomPaint(
+                  painter: StarWatermark(
+                    Theme.of(context).colorScheme.onSurface,
+                  ),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
+                            style: textTheme.bodyLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            '[name your intention]',
+                            style: intentionStyle(textTheme),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
+                            style: textTheme.bodyLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
