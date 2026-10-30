@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:st_andrew_novena/aboutPage.dart';
 import 'package:st_andrew_novena/appTheme.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 import 'package:st_andrew_novena/prayerBeads.dart';
@@ -36,10 +36,6 @@ void main() async {
 
   // fonts are bundled in assets/google_fonts (release builds have no INTERNET)
   GoogleFonts.config.allowRuntimeFetching = false;
-  LicenseRegistry.addLicense(() async* {
-    final license = await rootBundle.loadString('assets/google_fonts/OFL.txt');
-    yield LicenseEntryWithLineBreaks(['google_fonts'], license);
-  });
   try {
     await preloadFonts();
   } catch (e) {
@@ -91,7 +87,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-enum Screens { settings }
+enum Screens { settings, about }
 
 class ScreenNavigator {
   static Widget getScreenWidget(String screenString) {
@@ -103,6 +99,8 @@ class ScreenNavigator {
     switch (screen) {
       case Screens.settings:
         return SettingsPage();
+      case Screens.about:
+        return AboutPage();
     }
   }
 }
@@ -238,6 +236,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             itemBuilder: (BuildContext context) => <PopupMenuEntry>[
               const PopupMenuItem(child: Text('Reset'), value: 'reset'),
               const PopupMenuItem(child: Text('Settings'), value: 'settings'),
+              const PopupMenuItem(child: Text('About'), value: 'about'),
             ],
           ),
         ],

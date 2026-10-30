@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:st_andrew_novena/aboutPage.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 import 'package:st_andrew_novena/prayerBeads.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -209,6 +210,46 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('notifications_enabled'), isTrue);
   });
+
+  testWidgets('the about menu item opens the about page', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(PopupMenuButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('About'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('How to Pray It'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('What is a Novena?'), 200);
+    expect(find.text('What is a Novena?'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    expect(find.text('Amen'), findsOneWidget);
+  });
+
+  for (final scale in [1.0, 3.0]) {
+    testWidgets('the about page lays out without overflow at ${scale}x text', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 640) * 3;
+      tester.view.devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(MaterialApp(home: AboutPage()));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Prepare for Christmas with the St. Andrew Novena'),
+        1000,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('each Amen fills one more bead', (WidgetTester tester) async {
     final semantics = tester.ensureSemantics();
