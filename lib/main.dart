@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:st_andrew_novena/appTheme.dart';
 import 'package:st_andrew_novena/notificationService.dart';
+import 'package:st_andrew_novena/prayerBeads.dart';
 import 'package:st_andrew_novena/settingsPage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -30,6 +34,19 @@ Future<void> initLocalTimezone() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // fonts are bundled in assets/google_fonts (release builds have no INTERNET)
+  GoogleFonts.config.allowRuntimeFetching = false;
+  LicenseRegistry.addLicense(() async* {
+    final license = await rootBundle.loadString('assets/google_fonts/OFL.txt');
+    yield LicenseEntryWithLineBreaks(['google_fonts'], license);
+  });
+  try {
+    await preloadFonts();
+  } catch (e) {
+    // the fallback font is better than not starting
+    debugPrint('Could not load fonts: $e');
+  }
+
   await initLocalTimezone();
 
   // register the singleton service
@@ -41,32 +58,29 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return MaterialApp(
       title: 'St. Andrew Novena',
-      theme: ThemeData(
-        colorScheme: ColorScheme(
-          brightness: Brightness.light,
-          primary: Color(0xFF9f382b),
-          onPrimary: Colors.red,
-          primaryContainer: Colors.grey,
-          secondary: Colors.red,
-          secondaryContainer: Colors.grey,
-          onSecondary: Colors.red,
-          surface: Color(0xFFe6cb9e),
-          onSurface: Colors.black,
-          error: Colors.redAccent,
-          onError: Colors.white,
-        ),
-        appBarTheme: AppBarTheme(backgroundColor: Colors.amber),
-        useMaterial3: true,
-        textTheme: GoogleFonts.montserratTextTheme(textTheme)
-            .copyWith(bodySmall: TextStyle(fontSize: 20)),
-      ),
+      theme: lightTheme(),
+      darkTheme: darkTheme(),
+      themeMode: ThemeMode.system,
+      scrollBehavior: BouncingScrollBehavior(),
       home: MyHomePage(title: 'St. Andrew Novena'),
     );
   }
+}
+
+/// iOS-style bounce on every platform, instead of Android's overscroll stretch.
+class BouncingScrollBehavior extends MaterialScrollBehavior {
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
 }
 
 class MyHomePage extends StatefulWidget {
@@ -153,6 +167,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _incrementCounter() async {
+    HapticFeedback.lightImpact();
     final prefs = await SharedPreferences.getInstance();
     int counter = (prefs.getInt('counter') ?? 0) + 1;
     await prefs.setInt('counter', counter);
@@ -197,11 +212,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final colors = theme.extension<NovenaColors>()!;
+    final complete = _counter >= 15;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: Text(widget.title, style: GoogleFonts.montserrat()),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Text(widget.title),
         actions: <Widget>[
           PopupMenuButton(
             onSelected: (result) {
@@ -224,54 +242,67 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: <Widget>[
-              Text(
-                '$_counter',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              Container(
-                child: Column(
-                  children: [
-                    Text(
-                      'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
-                      style: Theme.of(context).textTheme.bodySmall,
+      body: DecoratedBox(
+        // candlelight: brightest around the ring, falling off to the edges
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: const Alignment(0, -0.6),
+            radius: 1.2,
+            colors: [colors.halo, theme.colorScheme.surface, colors.vignette],
+            stops: const [0, 0.55, 1],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Column(
+              children: <Widget>[
+                // everything but the Amen button scrolls, so the layout fits
+                // short screens (landscape, large text)
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(top: 36, bottom: 16),
+                    child: Column(
+                      children: [
+                        PrayerBeads(count: _counter),
+                        // always laid out, so the prayer doesn't move when
+                        // the badge appears
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: AnimatedOpacity(
+                            opacity: complete ? 1 : 0,
+                            duration: const Duration(milliseconds: 400),
+                            child: ExcludeSemantics(
+                              excluding: !complete,
+                              child: const CompletedBadge(),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
+                          style: textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          '[name your intention]',
+                          style: theme.extension<NovenaText>()!.intention,
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
+                          style: textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                    Text(
-                      '[name your intention]',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 18,
-                      ),
-                    ),
-                    Text(
-                      'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
+                FilledButton(
                   onPressed: _incrementCounter,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade100,
-                  ),
-                  child: Text(
-                    'Amen',
-                    style: TextStyle(
-                      fontSize: Theme.of(context).textTheme.bodySmall?.fontSize,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
+                  child: const Text('Amen'),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

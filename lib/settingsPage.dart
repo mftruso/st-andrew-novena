@@ -39,7 +39,6 @@ class _SettingPagesState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Settings'),
-        backgroundColor: Theme.of(context).colorScheme.surface,
         automaticallyImplyLeading: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -71,7 +70,8 @@ class _SettingPagesState extends State<SettingsPage> {
                   dense: true,
                   title: Text(
                     'Enables hourly notifications until the prayer is completed 15 times daily. Notifications resume at 7 a.m. each day.',
-                    style: Theme.of(context).textTheme.titleSmall,
+                    style: Theme.of(context).textTheme.bodyLarge
+                        ?.copyWith(fontSize: 18, height: 1.4),
                   ),
                 ),
               ],

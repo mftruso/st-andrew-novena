@@ -11,12 +11,18 @@ import 'package:get_it/get_it.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/notificationService.dart';
+import 'package:st_andrew_novena/prayerBeads.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'package:st_andrew_novena/main.dart';
 
 import 'notification_service_test.mocks.dart';
+
+List<bool> beadsFilled(WidgetTester tester) => [
+  for (var i = 0; i < 15; i++)
+    tester.widget<PrayerBead>(find.byKey(ValueKey('bead-$i'))).filled,
+];
 
 void main() {
   late MockNotificationService mockNotificationService;
@@ -203,4 +209,208 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('notifications_enabled'), isTrue);
   });
+
+  testWidgets('each Amen fills one more bead', (WidgetTester tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    expect(beadsFilled(tester), everyElement(isFalse));
+
+    for (var i = 0; i < 7; i++) {
+      await tester.tap(find.text('Amen'));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('7'), findsOneWidget);
+    expect(beadsFilled(tester), [
+      ...List.filled(7, true),
+      ...List.filled(8, false),
+    ]);
+    expect(find.bySemanticsLabel('7 of 15 prayers'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('the count keeps going past 15 with every bead filled', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'counter': 15,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('16'), findsOneWidget);
+    expect(beadsFilled(tester), everyElement(isTrue));
+  });
+
+  testWidgets('15th prayer shows completed for today, 14th does not', (
+    WidgetTester tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    // the badge is always laid out, so check what's visible and announced
+    double badgeOpacity() => tester
+        .widget<AnimatedOpacity>(
+          find.ancestor(
+            of: find.byType(CompletedBadge),
+            matching: find.byType(AnimatedOpacity),
+          ),
+        )
+        .opacity;
+    SharedPreferences.setMockInitialValues({
+      'notifications_enabled': false,
+      'counter': 13,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+    expect(find.text('14'), findsOneWidget);
+    expect(badgeOpacity(), 0);
+    expect(find.bySemanticsLabel('Completed for today'), findsNothing);
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+    expect(find.text('15'), findsOneWidget);
+    expect(badgeOpacity(), 1);
+    expect(find.bySemanticsLabel('Completed for today'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('follows the system dark theme', (WidgetTester tester) async {
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    expect(
+      Theme.of(tester.element(find.text('Amen'))).brightness,
+      Brightness.dark,
+    );
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+    expect(find.text('1'), findsOneWidget);
+  });
+
+  // phone-sized surfaces, including a landscape iPhone, where the fixed parts
+  // of the layout have the least room
+  const screens = {
+    'small Android portrait': Size(360, 640),
+    'iPhone portrait': Size(390, 844),
+    'iPhone landscape': Size(844, 390),
+  };
+  for (final MapEntry(key: name, value: size) in screens.entries) {
+    for (final scale in [1.0, 2.0, 3.0]) {
+      testWidgets('lays out without overflow: $name at ${scale}x text', (
+        WidgetTester tester,
+      ) async {
+        tester.view.physicalSize = size * 3;
+        tester.view.devicePixelRatio = 3;
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        addTearDown(tester.view.reset);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        SharedPreferences.setMockInitialValues({
+          'counter': 15,
+          'last_updated': DateTime.now().toString(),
+        });
+        await tester.pumpWidget(MyApp());
+        await tester.pumpAndSettle();
+
+        // a RenderFlex overflow would fail the test with an exception
+        expect(tester.takeException(), isNull);
+        // the Amen button is fully on screen and tappable without scrolling
+        final button = tester.getRect(find.byType(FilledButton));
+        expect(button.top, greaterThanOrEqualTo(0));
+        expect(button.bottom, lessThanOrEqualTo(size.height));
+        await tester.tap(find.text('Amen'));
+        await tester.pumpAndSettle();
+        expect(find.text('16'), findsOneWidget);
+      });
+    }
+  }
+
+  for (final scale in [1.0, 2.0, 3.0]) {
+    testWidgets('the badge fits its slot and the ring stays put at ${scale}x', (
+      WidgetTester tester,
+    ) async {
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      SharedPreferences.setMockInitialValues({
+        'counter': 14,
+        'last_updated': DateTime.now().toString(),
+      });
+      await tester.pumpWidget(MyApp());
+      await tester.pumpAndSettle();
+      final ringBefore = tester.getRect(find.byType(PrayerBeads));
+      final prayerBefore = tester.getRect(find.textContaining('Hail and'));
+
+      await tester.tap(find.text('Amen'));
+      await tester.pumpAndSettle();
+
+      expect(tester.getRect(find.byType(PrayerBeads)), ringBefore);
+      expect(tester.getRect(find.textContaining('Hail and')), prayerBefore);
+      final badge = tester.getRect(find.byType(CompletedBadge));
+      expect(badge.top, greaterThanOrEqualTo(ringBefore.bottom));
+      expect(badge.bottom, lessThanOrEqualTo(prayerBefore.top));
+    });
+  }
+
+  testWidgets('past 15 the ring reads as a count, not more than complete', (
+    WidgetTester tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    SharedPreferences.setMockInitialValues({
+      'counter': 15,
+      'last_updated': DateTime.now().toString(),
+    });
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('15 of 15 prayers'), findsOneWidget);
+    expect(find.text('of 15'), findsOneWidget);
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel(RegExp('of 15')), findsNothing);
+    expect(find.bySemanticsLabel('16 prayers'), findsOneWidget);
+    expect(find.text('of 15'), findsNothing);
+    expect(find.text('prayers'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('the intention style is built once per theme, not per build', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    TextStyle intention() =>
+        tester.widget<Text>(find.text('[name your intention]')).style!;
+    final before = intention();
+    expect(before.fontStyle, FontStyle.italic);
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+
+    expect(identical(intention(), before), isTrue);
+  });
+
+  testWidgets('the prayer bounces on Android instead of stretching', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(844, 390) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    expect(scrollable.position.physics, isA<BouncingScrollPhysics>());
+    expect(find.byType(StretchingOverscrollIndicator), findsNothing);
+    expect(find.byType(GlowingOverscrollIndicator), findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 }
