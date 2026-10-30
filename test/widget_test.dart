@@ -250,6 +250,16 @@ void main() {
   testWidgets('15th prayer shows completed for today, 14th does not', (
     WidgetTester tester,
   ) async {
+    final semantics = tester.ensureSemantics();
+    // the badge is always laid out, so check what's visible and announced
+    double badgeOpacity() => tester
+        .widget<AnimatedOpacity>(
+          find.ancestor(
+            of: find.byType(CompletedBadge),
+            matching: find.byType(AnimatedOpacity),
+          ),
+        )
+        .opacity;
     SharedPreferences.setMockInitialValues({
       'notifications_enabled': false,
       'counter': 13,
@@ -261,12 +271,15 @@ void main() {
     await tester.tap(find.text('Amen'));
     await tester.pumpAndSettle();
     expect(find.text('14'), findsOneWidget);
-    expect(find.text('Completed for today'), findsNothing);
+    expect(badgeOpacity(), 0);
+    expect(find.bySemanticsLabel('Completed for today'), findsNothing);
 
     await tester.tap(find.text('Amen'));
     await tester.pumpAndSettle();
     expect(find.text('15'), findsOneWidget);
-    expect(find.text('Completed for today'), findsOneWidget);
+    expect(badgeOpacity(), 1);
+    expect(find.bySemanticsLabel('Completed for today'), findsOneWidget);
+    semantics.dispose();
   });
 
   testWidgets('follows the system dark theme', (WidgetTester tester) async {
@@ -284,21 +297,105 @@ void main() {
     expect(find.text('1'), findsOneWidget);
   });
 
-  testWidgets('lays out without overflow at 200% text size', (
+  // phone-sized surfaces, including a landscape iPhone, where the fixed parts
+  // of the layout have the least room
+  const screens = {
+    'small Android portrait': Size(360, 640),
+    'iPhone portrait': Size(390, 844),
+    'iPhone landscape': Size(844, 390),
+  };
+  for (final MapEntry(key: name, value: size) in screens.entries) {
+    for (final scale in [1.0, 2.0, 3.0]) {
+      testWidgets('lays out without overflow: $name at ${scale}x text', (
+        WidgetTester tester,
+      ) async {
+        tester.view.physicalSize = size * 3;
+        tester.view.devicePixelRatio = 3;
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        addTearDown(tester.view.reset);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        SharedPreferences.setMockInitialValues({
+          'counter': 15,
+          'last_updated': DateTime.now().toString(),
+        });
+        await tester.pumpWidget(MyApp());
+        await tester.pumpAndSettle();
+
+        // a RenderFlex overflow would fail the test with an exception
+        expect(tester.takeException(), isNull);
+        // the Amen button is fully on screen and tappable without scrolling
+        final button = tester.getRect(find.byType(FilledButton));
+        expect(button.top, greaterThanOrEqualTo(0));
+        expect(button.bottom, lessThanOrEqualTo(size.height));
+        await tester.tap(find.text('Amen'));
+        await tester.pumpAndSettle();
+        expect(find.text('16'), findsOneWidget);
+      });
+    }
+  }
+
+  for (final scale in [1.0, 2.0, 3.0]) {
+    testWidgets('the badge fits its slot and the ring stays put at ${scale}x', (
+      WidgetTester tester,
+    ) async {
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      SharedPreferences.setMockInitialValues({
+        'counter': 14,
+        'last_updated': DateTime.now().toString(),
+      });
+      await tester.pumpWidget(MyApp());
+      await tester.pumpAndSettle();
+      final ringBefore = tester.getRect(find.byType(PrayerBeads));
+      final prayerBefore = tester.getRect(find.textContaining('Hail and'));
+
+      await tester.tap(find.text('Amen'));
+      await tester.pumpAndSettle();
+
+      expect(tester.getRect(find.byType(PrayerBeads)), ringBefore);
+      expect(tester.getRect(find.textContaining('Hail and')), prayerBefore);
+      final badge = tester.getRect(find.byType(CompletedBadge));
+      expect(badge.top, greaterThanOrEqualTo(ringBefore.bottom));
+      expect(badge.bottom, lessThanOrEqualTo(prayerBefore.top));
+    });
+  }
+
+  testWidgets('past 15 the ring reads as a count, not more than complete', (
     WidgetTester tester,
   ) async {
-    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
-    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final semantics = tester.ensureSemantics();
     SharedPreferences.setMockInitialValues({
       'counter': 15,
       'last_updated': DateTime.now().toString(),
     });
     await tester.pumpWidget(MyApp());
     await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('15 of 15 prayers'), findsOneWidget);
+    expect(find.text('of 15'), findsOneWidget);
 
-    // a RenderFlex overflow would fail the test with an exception
-    expect(tester.takeException(), isNull);
-    expect(find.text('15'), findsOneWidget);
-    expect(find.text('Completed for today'), findsOneWidget);
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel(RegExp('of 15')), findsNothing);
+    expect(find.bySemanticsLabel('16 prayers'), findsOneWidget);
+    expect(find.text('of 15'), findsNothing);
+    expect(find.text('prayers'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('the intention style is built once per theme, not per build', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    TextStyle intention() =>
+        tester.widget<Text>(find.text('[name your intention]')).style!;
+    final before = intention();
+    expect(before.fontStyle, FontStyle.italic);
+
+    await tester.tap(find.text('Amen'));
+    await tester.pumpAndSettle();
+
+    expect(identical(intention(), before), isTrue);
   });
 }

@@ -29,9 +29,11 @@ class PrayerBeads extends StatelessWidget {
     final ringSize = _ringSize * ringScale(context);
     final radius = (ringSize - _beadSize) / 2;
     final complete = count >= total;
+    // past the total, "16 of 15" would read as more than complete
+    final over = count > total;
 
     return Semantics(
-      label: '$count of $total prayers',
+      label: over ? '$count prayers' : '$count of $total prayers',
       excludeSemantics: true,
       child: SizedBox.square(
         dimension: ringSize,
@@ -59,7 +61,7 @@ class PrayerBeads extends StatelessWidget {
                     style: theme.textTheme.displayMedium?.copyWith(height: 1),
                   ),
                   Text(
-                    'of $total',
+                    over ? 'prayers' : 'of $total',
                     style: theme.textTheme.titleSmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -150,7 +152,14 @@ class CompletedBadge extends StatelessWidget {
       children: [
         Icon(Icons.star_rounded, color: theme.extension<NovenaColors>()!.gold),
         const SizedBox(width: 6),
-        Text('Completed for today', style: theme.textTheme.titleMedium),
+        // wraps at large text sizes instead of overflowing the screen
+        Flexible(
+          child: Text(
+            'Completed for today',
+            style: theme.textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+        ),
       ],
     );
   }

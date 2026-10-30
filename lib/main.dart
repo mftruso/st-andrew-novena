@@ -40,6 +40,12 @@ void main() async {
     final license = await rootBundle.loadString('assets/google_fonts/OFL.txt');
     yield LicenseEntryWithLineBreaks(['google_fonts'], license);
   });
+  try {
+    await preloadFonts();
+  } catch (e) {
+    // the fallback font is better than not starting
+    debugPrint('Could not load fonts: $e');
+  }
 
   await initLocalTimezone();
 
@@ -194,6 +200,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final colors = theme.extension<NovenaColors>()!;
+    final complete = _counter >= 15;
 
     return Scaffold(
       appBar: AppBar(
@@ -235,21 +242,27 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Column(
               children: <Widget>[
-                // about the same gap as below the ring, where the badge sits
-                const SizedBox(height: 36),
-                PrayerBeads(count: _counter),
-                SizedBox(
-                  height: 24 + 24 * textScale(context),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: _counter >= 15 ? const CompletedBadge() : null,
-                  ),
-                ),
+                // everything but the Amen button scrolls, so the layout fits
+                // short screens (landscape, large text)
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(top: 36, bottom: 16),
                     child: Column(
                       children: [
+                        PrayerBeads(count: _counter),
+                        // always laid out, so the prayer doesn't move when
+                        // the badge appears
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: AnimatedOpacity(
+                            opacity: complete ? 1 : 0,
+                            duration: const Duration(milliseconds: 400),
+                            child: ExcludeSemantics(
+                              excluding: !complete,
+                              child: const CompletedBadge(),
+                            ),
+                          ),
+                        ),
                         Text(
                           'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
                           style: textTheme.bodyLarge,
@@ -257,7 +270,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         ),
                         Text(
                           '[name your intention]',
-                          style: intentionStyle(textTheme),
+                          style: theme.extension<NovenaText>()!.intention,
                           textAlign: TextAlign.center,
                         ),
                         Text(

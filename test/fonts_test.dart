@@ -13,11 +13,6 @@ void main() {
 
     // In the real zone: asset reads don't complete under fake async.
     // pendingFonts throws if a requested variant isn't in assets/google_fonts.
-    await tester.runAsync(() async {
-      for (final theme in [lightTheme(), darkTheme()]) {
-        intentionStyle(theme.textTheme);
-      }
-      await GoogleFonts.pendingFonts();
-    });
+    await tester.runAsync(preloadFonts);
   });
 }

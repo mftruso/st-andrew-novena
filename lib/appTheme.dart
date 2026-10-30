@@ -57,6 +57,33 @@ class NovenaColors extends ThemeExtension<NovenaColors> {
   }
 }
 
+/// Text styles the TextTheme has no slot for.
+class NovenaText extends ThemeExtension<NovenaText> {
+  const NovenaText({required this.intention});
+
+  /// The prayer's body style in italic, for `[name your intention]`.
+  final TextStyle intention;
+
+  @override
+  NovenaText copyWith({TextStyle? intention}) {
+    return NovenaText(intention: intention ?? this.intention);
+  }
+
+  @override
+  NovenaText lerp(NovenaText? other, double t) {
+    if (other == null) return this;
+    return NovenaText(intention: TextStyle.lerp(intention, other.intention, t)!);
+  }
+}
+
+/// Requests every font the themes use and waits until they have loaded from
+/// assets/google_fonts, so the first frame doesn't draw a fallback font.
+Future<void> preloadFonts() {
+  lightTheme();
+  darkTheme();
+  return GoogleFonts.pendingFonts();
+}
+
 ThemeData lightTheme() {
   // "winter dawn": the midnight palette on ivory
   return _theme(
@@ -111,8 +138,8 @@ ThemeData darkTheme() {
 ThemeData _theme(
   ColorScheme scheme,
   NovenaColors novenaColors, {
-  Color? appBarBackground,
-  Color? appBarForeground,
+  required Color appBarBackground,
+  required Color appBarForeground,
 }) {
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
   // base.textTheme carries only colors; weights and sizes come from the
@@ -128,10 +155,18 @@ ThemeData _theme(
 
   return base.copyWith(
     textTheme: textTheme,
-    extensions: [novenaColors],
+    extensions: [
+      novenaColors,
+      NovenaText(
+        intention: GoogleFonts.ebGaramond(
+          textStyle: textTheme.bodyLarge,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    ],
     appBarTheme: AppBarTheme(
-      backgroundColor: appBarBackground ?? scheme.primary,
-      foregroundColor: appBarForeground ?? scheme.onPrimary,
+      backgroundColor: appBarBackground,
+      foregroundColor: appBarForeground,
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -145,13 +180,5 @@ ThemeData _theme(
         ),
       ),
     ),
-  );
-}
-
-/// The prayer's body style in italic, for `[name your intention]`.
-TextStyle intentionStyle(TextTheme textTheme) {
-  return GoogleFonts.ebGaramond(
-    textStyle: textTheme.bodyLarge,
-    fontStyle: FontStyle.italic,
   );
 }
