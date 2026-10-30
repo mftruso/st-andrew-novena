@@ -5,6 +5,8 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -43,6 +45,9 @@ void main() {
         .thenAnswer((_) async => {});
     when(mockNotificationService.syncNotifications())
         .thenAnswer((_) async => {});
+    when(mockNotificationService.requestPermissions())
+        .thenAnswer((_) async => {});
+    when(mockNotificationService.hasPermission()).thenAnswer((_) async => true);
 
     final getIt = GetIt.instance;
     if (getIt.isRegistered<NotificationService>()) {
@@ -191,6 +196,76 @@ void main() {
     verify(mockNotificationService.syncNotifications()).called(1);
   });
 
+  Future<void> openSettings(WidgetTester tester) async {
+    await tester.tap(find.byType(PopupMenuButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('settings turns notifications off without permission', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'notifications_enabled': true});
+    when(mockNotificationService.hasPermission())
+        .thenAnswer((_) async => false);
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    clearInteractions(mockNotificationService);
+
+    await openSettings(tester);
+
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('notifications_enabled'), isFalse);
+    verify(mockNotificationService.syncNotifications()).called(1);
+    expect(find.textContaining('turned off for this app'), findsOneWidget);
+  });
+
+  testWidgets('settings leaves notifications on with permission', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'notifications_enabled': true});
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    clearInteractions(mockNotificationService);
+
+    await openSettings(tester);
+
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    verifyNever(mockNotificationService.syncNotifications());
+  });
+
+  testWidgets("denying permission turns the switch back off", (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    await openSettings(tester);
+    clearInteractions(mockNotificationService);
+
+    final permission = Completer<void>();
+    when(mockNotificationService.requestPermissions())
+        .thenAnswer((_) => permission.future);
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    verify(mockNotificationService.syncNotifications()).called(1);
+
+    when(mockNotificationService.hasPermission())
+        .thenAnswer((_) async => false);
+    permission.complete();
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('notifications_enabled'), isFalse);
+    // one resync, which cancels what was scheduled
+    verify(mockNotificationService.syncNotifications()).called(1);
+    expect(find.text('Notifications Enabled'), findsNothing);
+    expect(find.textContaining('turned off for this app'), findsOneWidget);
+  });
+
   testWidgets('toggling the notifications setting resyncs', (
     WidgetTester tester,
   ) async {
@@ -202,12 +277,35 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
+    final permission = Completer<void>();
+    when(mockNotificationService.requestPermissions())
+        .thenAnswer((_) => permission.future);
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
+    // syncs right away, without waiting for the permission answer
+    verify(mockNotificationService.requestPermissions()).called(1);
     verify(mockNotificationService.syncNotifications()).called(1);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('notifications_enabled'), isTrue);
+
+    expect(find.text('Notifications Enabled'), findsNothing);
+
+    // and again once it's answered, since iOS dropped what was scheduled
+    permission.complete();
+    await tester.pump();
+    verify(mockNotificationService.syncNotifications()).called(1);
+    await tester.pump();
+    expect(find.text('Notifications Enabled'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    // turning notifications off doesn't ask again
+    verifyNever(mockNotificationService.requestPermissions());
+    verify(mockNotificationService.syncNotifications()).called(1);
+    expect(prefs.getBool('notifications_enabled'), isFalse);
   });
 
   testWidgets('each Amen fills one more bead', (WidgetTester tester) async {

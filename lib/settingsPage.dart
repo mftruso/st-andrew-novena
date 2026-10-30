@@ -20,12 +20,54 @@ class _SettingPagesState extends State<SettingsPage> {
     setState(() {
       _notificationsEnabled = notificationsEnabled ?? false;
     });
+    await _turnOffIfNotPermitted();
   }
 
   Future _storeNotificationPreferences(value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications_enabled', value);
+    if (value) {
+      // Not awaited: the dialog can stay up. iOS drops notifications
+      // scheduled before permission is granted, so resync once it's answered.
+      getIt<NotificationService>().requestPermissions().then((_) async {
+        if (await _turnOffIfNotPermitted()) {
+          return;
+        }
+        await getIt<NotificationService>().syncNotifications();
+        // unless it was switched back off while the dialog was up
+        if (mounted && _notificationsEnabled) {
+          _showToast(context, true);
+        }
+      });
+    }
     await getIt<NotificationService>().syncNotifications();
+  }
+
+  /// Turns notifications off (and resyncs) if they're on but the OS doesn't
+  /// allow them: the prompt was denied, or permission was revoked in system
+  /// settings. Returns whether it turned them off.
+  Future<bool> _turnOffIfNotPermitted() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('notifications_enabled') ?? false) ||
+        await getIt<NotificationService>().hasPermission()) {
+      return false;
+    }
+    await prefs.setBool('notifications_enabled', false);
+    await getIt<NotificationService>().syncNotifications();
+    if (!mounted) {
+      return true;
+    }
+    setState(() {
+      _notificationsEnabled = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Notifications are turned off for this app in system settings',
+        ),
+      ),
+    );
+    return true;
   }
 
   @override
@@ -61,7 +103,10 @@ class _SettingPagesState extends State<SettingsPage> {
                       setState(() {
                         _notificationsEnabled = value;
                       });
-                      _showToast(context, value);
+                      // enabling is confirmed once permission is answered
+                      if (!value) {
+                        _showToast(context, value);
+                      }
                       await _storeNotificationPreferences(value);
                     },
                   ),
