@@ -398,4 +398,19 @@ void main() {
 
     expect(identical(intention(), before), isTrue);
   });
+
+  testWidgets('the prayer bounces on Android instead of stretching', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(844, 390) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    expect(scrollable.position.physics, isA<BouncingScrollPhysics>());
+    expect(find.byType(StretchingOverscrollIndicator), findsNothing);
+    expect(find.byType(GlowingOverscrollIndicator), findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 }

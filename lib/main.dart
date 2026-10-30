@@ -63,9 +63,24 @@ class MyApp extends StatelessWidget {
       theme: lightTheme(),
       darkTheme: darkTheme(),
       themeMode: ThemeMode.system,
+      scrollBehavior: BouncingScrollBehavior(),
       home: MyHomePage(title: 'St. Andrew Novena'),
     );
   }
+}
+
+/// iOS-style bounce on every platform, instead of Android's overscroll stretch.
+class BouncingScrollBehavior extends MaterialScrollBehavior {
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
 }
 
 class MyHomePage extends StatefulWidget {
