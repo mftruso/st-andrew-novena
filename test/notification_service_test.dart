@@ -13,6 +13,7 @@ import 'notification_service_test.mocks.dart';
 @GenerateMocks([
   FlutterLocalNotificationsPlugin,
   AndroidFlutterLocalNotificationsPlugin,
+  IOSFlutterLocalNotificationsPlugin,
   NotificationService,
 ])
 void main() {
@@ -303,47 +304,190 @@ void main() {
   });
 
   group('initialize', () {
-    test(
-      'a failed permission request does not escape or block initialize',
-      () async {
-        final mockAndroidPlugin = MockAndroidFlutterLocalNotificationsPlugin();
-        when(mockAndroidPlugin.requestNotificationsPermission()).thenAnswer(
-          (_) => Future.error(
-            PlatformException(code: 'permissionRequestInProgress'),
+    test('does not ask for notification permission', () async {
+      final mockAndroidPlugin = MockAndroidFlutterLocalNotificationsPlugin();
+      when(
+        mockFlutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(mockAndroidPlugin);
+      when(
+        mockFlutterLocalNotificationsPlugin.initialize(
+          settings: anyNamed('settings'),
+          onDidReceiveNotificationResponse: anyNamed(
+            'onDidReceiveNotificationResponse',
           ),
-        );
-        when(
-          mockFlutterLocalNotificationsPlugin
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >(),
-        ).thenReturn(mockAndroidPlugin);
-        when(
-          mockFlutterLocalNotificationsPlugin.initialize(
-            settings: anyNamed('settings'),
-            onDidReceiveNotificationResponse: anyNamed(
-              'onDidReceiveNotificationResponse',
-            ),
-          ),
-        ).thenAnswer((_) async => true);
+        ),
+      ).thenAnswer((_) async => true);
 
-        await NotificationService(plugin: mockFlutterLocalNotificationsPlugin)
-            .initialize();
-        // Let the permission request's error reach its handler; an unhandled
-        // error here would fail the test.
-        await pumpEventQueue();
+      await NotificationService(plugin: mockFlutterLocalNotificationsPlugin)
+          .initialize();
 
-        verify(mockAndroidPlugin.requestNotificationsPermission()).called(1);
-        verify(
-          mockFlutterLocalNotificationsPlugin.initialize(
-            settings: anyNamed('settings'),
-            onDidReceiveNotificationResponse: anyNamed(
-              'onDidReceiveNotificationResponse',
-            ),
+      verifyNever(mockAndroidPlugin.requestNotificationsPermission());
+      final InitializationSettings settings =
+          verify(
+                mockFlutterLocalNotificationsPlugin.initialize(
+                  settings: captureAnyNamed('settings'),
+                  onDidReceiveNotificationResponse: anyNamed(
+                    'onDidReceiveNotificationResponse',
+                  ),
+                ),
+              ).captured.single
+              as InitializationSettings;
+      expect(settings.iOS?.requestAlertPermission, isFalse);
+      expect(settings.iOS?.requestBadgePermission, isFalse);
+      expect(settings.iOS?.requestSoundPermission, isFalse);
+    });
+  });
+
+  group('requestPermissions', () {
+    late MockAndroidFlutterLocalNotificationsPlugin mockAndroidPlugin;
+    late MockIOSFlutterLocalNotificationsPlugin mockIOSPlugin;
+
+    setUp(() {
+      mockAndroidPlugin = MockAndroidFlutterLocalNotificationsPlugin();
+      mockIOSPlugin = MockIOSFlutterLocalNotificationsPlugin();
+      // mockito matches stubs ignoring type arguments, so pick by type here
+      final implementations = {
+        AndroidFlutterLocalNotificationsPlugin: mockAndroidPlugin,
+        IOSFlutterLocalNotificationsPlugin: mockIOSPlugin,
+      };
+      when(
+        mockFlutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation(),
+      ).thenAnswer(
+        (invocation) => implementations[invocation.typeArguments.single],
+      );
+    });
+
+    test('asks on Android and iOS', () async {
+      when(mockAndroidPlugin.requestNotificationsPermission())
+          .thenAnswer((_) async => true);
+      when(
+        mockIOSPlugin.requestPermissions(
+          alert: anyNamed('alert'),
+          badge: anyNamed('badge'),
+          sound: anyNamed('sound'),
+          provisional: anyNamed('provisional'),
+          critical: anyNamed('critical'),
+          carPlay: anyNamed('carPlay'),
+          providesAppNotificationSettings: anyNamed(
+            'providesAppNotificationSettings',
           ),
-        ).called(1);
-      },
+        ),
+      ).thenAnswer((_) async => true);
+
+      await NotificationService(plugin: mockFlutterLocalNotificationsPlugin)
+          .requestPermissions();
+
+      verify(mockAndroidPlugin.requestNotificationsPermission()).called(1);
+      verify(
+        mockIOSPlugin.requestPermissions(alert: true, badge: true, sound: true),
+      ).called(1);
+    });
+
+    test('a failed permission request does not escape', () async {
+      when(mockAndroidPlugin.requestNotificationsPermission()).thenAnswer(
+        (_) => Future.error(
+          PlatformException(code: 'permissionRequestInProgress'),
+        ),
+      );
+      when(
+        mockIOSPlugin.requestPermissions(
+          alert: anyNamed('alert'),
+          badge: anyNamed('badge'),
+          sound: anyNamed('sound'),
+          provisional: anyNamed('provisional'),
+          critical: anyNamed('critical'),
+          carPlay: anyNamed('carPlay'),
+          providesAppNotificationSettings: anyNamed(
+            'providesAppNotificationSettings',
+          ),
+        ),
+      ).thenAnswer((_) => Future.error(PlatformException(code: 'error')));
+
+      // an error escaping here would fail the test
+      await NotificationService(plugin: mockFlutterLocalNotificationsPlugin)
+          .requestPermissions();
+
+      verify(mockAndroidPlugin.requestNotificationsPermission()).called(1);
+      verify(
+        mockIOSPlugin.requestPermissions(alert: true, badge: true, sound: true),
+      ).called(1);
+    });
+  });
+
+  group('hasPermission', () {
+    late MockAndroidFlutterLocalNotificationsPlugin mockAndroidPlugin;
+    late MockIOSFlutterLocalNotificationsPlugin mockIOSPlugin;
+
+    // stubs which platform implementation resolves (null for the other)
+    void resolveTo(
+      Type type,
+      FlutterLocalNotificationsPlatform implementation,
+    ) {
+      when(
+        mockFlutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation(),
+      ).thenAnswer(
+        (invocation) =>
+            invocation.typeArguments.single == type ? implementation : null,
+      );
+    }
+
+    NotificationsEnabledOptions iosOptions({
+      bool isEnabled = false,
+      bool isProvisionalEnabled = false,
+    }) => NotificationsEnabledOptions(
+      isEnabled: isEnabled,
+      isSoundEnabled: false,
+      isAlertEnabled: false,
+      isBadgeEnabled: false,
+      isProvisionalEnabled: isProvisionalEnabled,
+      isCriticalEnabled: false,
+      isProvidesAppNotificationSettingsEnabled: false,
+      isCarPlayEnabled: false,
     );
+
+    Future<bool> hasPermission() =>
+        NotificationService(plugin: mockFlutterLocalNotificationsPlugin)
+            .hasPermission();
+
+    setUp(() {
+      mockAndroidPlugin = MockAndroidFlutterLocalNotificationsPlugin();
+      mockIOSPlugin = MockIOSFlutterLocalNotificationsPlugin();
+    });
+
+    test('follows areNotificationsEnabled on Android', () async {
+      resolveTo(AndroidFlutterLocalNotificationsPlugin, mockAndroidPlugin);
+      when(mockAndroidPlugin.areNotificationsEnabled())
+          .thenAnswer((_) async => false);
+      expect(await hasPermission(), isFalse);
+      when(mockAndroidPlugin.areNotificationsEnabled())
+          .thenAnswer((_) async => true);
+      expect(await hasPermission(), isTrue);
+    });
+
+    test('counts authorized and provisional on iOS', () async {
+      resolveTo(IOSFlutterLocalNotificationsPlugin, mockIOSPlugin);
+      when(mockIOSPlugin.checkPermissions())
+          .thenAnswer((_) async => iosOptions());
+      expect(await hasPermission(), isFalse);
+      when(mockIOSPlugin.checkPermissions())
+          .thenAnswer((_) async => iosOptions(isEnabled: true));
+      expect(await hasPermission(), isTrue);
+      when(mockIOSPlugin.checkPermissions())
+          .thenAnswer((_) async => iosOptions(isProvisionalEnabled: true));
+      expect(await hasPermission(), isTrue);
+    });
+
+    test('a failed check counts as permitted', () async {
+      resolveTo(AndroidFlutterLocalNotificationsPlugin, mockAndroidPlugin);
+      when(mockAndroidPlugin.areNotificationsEnabled())
+          .thenAnswer((_) => Future.error(PlatformException(code: 'error')));
+      expect(await hasPermission(), isTrue);
+    });
   });
 
   group('cancelAllNotifications', () {

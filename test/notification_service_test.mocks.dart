@@ -508,6 +508,198 @@ class MockAndroidFlutterLocalNotificationsPlugin extends _i1.Mock
       ) as _i3.Future<List<_i2.ActiveNotification>>);
 }
 
+/// A class which mocks [IOSFlutterLocalNotificationsPlugin].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockIOSFlutterLocalNotificationsPlugin extends _i1.Mock
+    implements _i2.IOSFlutterLocalNotificationsPlugin {
+  MockIOSFlutterLocalNotificationsPlugin() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i3.Future<bool?> initialize({
+    required _i2.DarwinInitializationSettings? settings,
+    _i2.DidReceiveNotificationResponseCallback?
+    onDidReceiveNotificationResponse,
+    _i2.DidReceiveBackgroundNotificationResponseCallback?
+    onDidReceiveBackgroundNotificationResponse,
+  }) => (super.noSuchMethod(
+    Invocation.method(#initialize, [], {
+      #settings: settings,
+      #onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+      #onDidReceiveBackgroundNotificationResponse:
+          onDidReceiveBackgroundNotificationResponse,
+    }),
+    returnValue: _i3.Future<bool?>.value(),
+  ) as _i3.Future<bool?>);
+
+  @override
+  _i3.Future<bool?> requestPermissions({
+    bool? sound = false,
+    bool? alert = false,
+    bool? badge = false,
+    bool? provisional = false,
+    bool? critical = false,
+    bool? carPlay = false,
+    bool? providesAppNotificationSettings = false,
+  }) => (super.noSuchMethod(
+    Invocation.method(#requestPermissions, [], {
+      #sound: sound,
+      #alert: alert,
+      #badge: badge,
+      #provisional: provisional,
+      #critical: critical,
+      #carPlay: carPlay,
+      #providesAppNotificationSettings: providesAppNotificationSettings,
+    }),
+    returnValue: _i3.Future<bool?>.value(),
+  ) as _i3.Future<bool?>);
+
+  @override
+  _i3.Future<_i2.NotificationsEnabledOptions?> checkPermissions() =>
+      (super.noSuchMethod(
+        Invocation.method(#checkPermissions, []),
+        returnValue: _i3.Future<_i2.NotificationsEnabledOptions?>.value(),
+      ) as _i3.Future<_i2.NotificationsEnabledOptions?>);
+
+  @override
+  _i3.Future<bool?> openAppNotificationSettings() => (super.noSuchMethod(
+    Invocation.method(#openAppNotificationSettings, []),
+    returnValue: _i3.Future<bool?>.value(),
+  ) as _i3.Future<bool?>);
+
+  @override
+  _i3.Future<void> zonedSchedule({
+    required int? id,
+    String? title,
+    String? body,
+    required _i4.TZDateTime? scheduledDate,
+    String? payload,
+    _i2.DateTimeComponents? matchDateTimeComponents,
+    _i2.DarwinNotificationDetails? notificationDetails,
+  }) => (super.noSuchMethod(
+    Invocation.method(#zonedSchedule, [], {
+      #id: id,
+      #title: title,
+      #body: body,
+      #scheduledDate: scheduledDate,
+      #payload: payload,
+      #matchDateTimeComponents: matchDateTimeComponents,
+      #notificationDetails: notificationDetails,
+    }),
+    returnValue: _i3.Future<void>.value(),
+    returnValueForMissingStub: _i3.Future<void>.value(),
+  ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> show({
+    required int? id,
+    String? title,
+    String? body,
+    _i2.DarwinNotificationDetails? notificationDetails,
+    String? payload,
+  }) => (super.noSuchMethod(
+    Invocation.method(#show, [], {
+      #id: id,
+      #title: title,
+      #body: body,
+      #notificationDetails: notificationDetails,
+      #payload: payload,
+    }),
+    returnValue: _i3.Future<void>.value(),
+    returnValueForMissingStub: _i3.Future<void>.value(),
+  ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> periodicallyShow({
+    required int? id,
+    String? title,
+    String? body,
+    required _i2.RepeatInterval? repeatInterval,
+    _i2.DarwinNotificationDetails? notificationDetails,
+    String? payload,
+  }) => (super.noSuchMethod(
+    Invocation.method(#periodicallyShow, [], {
+      #id: id,
+      #title: title,
+      #body: body,
+      #repeatInterval: repeatInterval,
+      #notificationDetails: notificationDetails,
+      #payload: payload,
+    }),
+    returnValue: _i3.Future<void>.value(),
+    returnValueForMissingStub: _i3.Future<void>.value(),
+  ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> periodicallyShowWithDuration({
+    required int? id,
+    String? title,
+    String? body,
+    required Duration? repeatDurationInterval,
+    _i2.DarwinNotificationDetails? notificationDetails,
+    String? payload,
+  }) => (super.noSuchMethod(
+    Invocation.method(#periodicallyShowWithDuration, [], {
+      #id: id,
+      #title: title,
+      #body: body,
+      #repeatDurationInterval: repeatDurationInterval,
+      #notificationDetails: notificationDetails,
+      #payload: payload,
+    }),
+    returnValue: _i3.Future<void>.value(),
+    returnValueForMissingStub: _i3.Future<void>.value(),
+  ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> cancel({required int? id}) => (super.noSuchMethod(
+    Invocation.method(#cancel, [], {#id: id}),
+    returnValue: _i3.Future<void>.value(),
+    returnValueForMissingStub: _i3.Future<void>.value(),
+  ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> cancelAll() => (super.noSuchMethod(
+    Invocation.method(#cancelAll, []),
+    returnValue: _i3.Future<void>.value(),
+    returnValueForMissingStub: _i3.Future<void>.value(),
+  ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> cancelAllPendingNotifications() => (super.noSuchMethod(
+    Invocation.method(#cancelAllPendingNotifications, []),
+    returnValue: _i3.Future<void>.value(),
+    returnValueForMissingStub: _i3.Future<void>.value(),
+  ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<_i2.NotificationAppLaunchDetails?>
+  getNotificationAppLaunchDetails() => (super.noSuchMethod(
+    Invocation.method(#getNotificationAppLaunchDetails, []),
+    returnValue: _i3.Future<_i2.NotificationAppLaunchDetails?>.value(),
+  ) as _i3.Future<_i2.NotificationAppLaunchDetails?>);
+
+  @override
+  _i3.Future<List<_i2.PendingNotificationRequest>>
+  pendingNotificationRequests() => (super.noSuchMethod(
+    Invocation.method(#pendingNotificationRequests, []),
+    returnValue: _i3.Future<List<_i2.PendingNotificationRequest>>.value(
+      <_i2.PendingNotificationRequest>[],
+    ),
+  ) as _i3.Future<List<_i2.PendingNotificationRequest>>);
+
+  @override
+  _i3.Future<List<_i2.ActiveNotification>> getActiveNotifications() =>
+      (super.noSuchMethod(
+        Invocation.method(#getActiveNotifications, []),
+        returnValue: _i3.Future<List<_i2.ActiveNotification>>.value(
+          <_i2.ActiveNotification>[],
+        ),
+      ) as _i3.Future<List<_i2.ActiveNotification>>);
+}
+
 /// A class which mocks [NotificationService].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -533,6 +725,19 @@ class MockNotificationService extends _i1.Mock
     returnValue: _i3.Future<void>.value(),
     returnValueForMissingStub: _i3.Future<void>.value(),
   ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> requestPermissions() => (super.noSuchMethod(
+    Invocation.method(#requestPermissions, []),
+    returnValue: _i3.Future<void>.value(),
+    returnValueForMissingStub: _i3.Future<void>.value(),
+  ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<bool> hasPermission() => (super.noSuchMethod(
+    Invocation.method(#hasPermission, []),
+    returnValue: _i3.Future<bool>.value(false),
+  ) as _i3.Future<bool>);
 
   @override
   void onDidReceiveNotificationResponse(_i2.NotificationResponse? response) =>

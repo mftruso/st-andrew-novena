@@ -24,22 +24,16 @@ class NotificationService {
        _now = now ?? (() => tz.TZDateTime.now(tz.local));
 
   Future<void> initialize() async {
-    // Not awaited: the dialog would block startup until the user answers it.
-    flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission()
-        .onError<PlatformException>((e, _) {
-          debugPrint('notification permission request failed: $e');
-          return null;
-        });
-
     var initializationSettingsAndroid = AndroidInitializationSettings(
       'ic_notifications_white_18dp',
     );
+    // permission is asked for in requestPermissions, not at launch
     final DarwinInitializationSettings initializationSettingsDarwin =
-        DarwinInitializationSettings();
+        DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        );
 
     final InitializationSettings initializationSettings =
         InitializationSettings(
@@ -50,6 +44,58 @@ class NotificationService {
       settings: initializationSettings,
       onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
     );
+  }
+
+  /// Asks for permission to show notifications, when the user turns them on.
+  /// Completes once the user answers (or the request fails); errors are
+  /// logged, not thrown.
+  Future<void> requestPermissions() async {
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.requestNotificationsPermission()
+        .onError<PlatformException>((e, _) {
+          debugPrint('notification permission request failed: $e');
+          return null;
+        });
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.requestPermissions(alert: true, badge: true, sound: true)
+        .onError<PlatformException>((e, _) {
+          debugPrint('notification permission request failed: $e');
+          return null;
+        });
+  }
+
+  /// Whether the OS lets the app show notifications (iOS provisional
+  /// authorization counts). True if it can't tell, so a failed check never
+  /// turns notifications off.
+  Future<bool> hasPermission() async {
+    try {
+      final android = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (android != null) {
+        return await android.areNotificationsEnabled() ?? true;
+      }
+      final ios = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      if (ios != null) {
+        final options = await ios.checkPermissions();
+        return options == null ||
+            options.isEnabled ||
+            options.isProvisionalEnabled;
+      }
+    } on PlatformException catch (e) {
+      debugPrint('notification permission check failed: $e');
+    }
+    return true;
   }
 
   void onDidReceiveNotificationResponse(NotificationResponse? response) {

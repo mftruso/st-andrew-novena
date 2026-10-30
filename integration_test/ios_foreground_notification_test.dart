@@ -23,8 +23,11 @@ void main() {
       final plugin = FlutterLocalNotificationsPlugin();
       await plugin.initialize(
         settings: InitializationSettings(
+          // provisional only modifies the other options: on its own the
+          // plugin requests nothing. With it, alert is granted without a
+          // prompt.
           iOS: DarwinInitializationSettings(
-            requestAlertPermission: false,
+            requestAlertPermission: true,
             requestBadgePermission: false,
             requestSoundPermission: false,
             requestProvisionalPermission: true,

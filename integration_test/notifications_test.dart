@@ -1,9 +1,10 @@
 // On-device tests that check what the real flutter_local_notifications plugin
 // has pending. Run with: flutter test integration_test -d <device>
 //
-// On Android the app isn't granted the notification permission, so its
-// dialog may stay up during the run; it doesn't block the tests (a repeated
-// request's permissionRequestInProgress error is logged, not thrown).
+// Turning notifications on in settings asks for permission without awaiting
+// the answer, so the dialog may stay up during the run; it doesn't block the
+// tests (on Android a repeated request's permissionRequestInProgress error is
+// logged, not thrown).
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -86,7 +87,17 @@ Future<void> launchApp(WidgetTester tester) async {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(initLocalTimezone);
+  setUpAll(() async {
+    await initLocalTimezone();
+    // iOS drops notifications scheduled before permission is granted, and the
+    // app only asks from settings. Provisional authorization is granted
+    // without a prompt (alert is needed: provisional alone requests nothing).
+    await FlutterLocalNotificationsPlugin()
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.requestPermissions(alert: true, provisional: true);
+  });
 
   setUp(() async {
     // state persists on the device between tests
