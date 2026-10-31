@@ -62,7 +62,7 @@ class AboutPage extends StatelessWidget {
             ),
             heading('How to Pray It'),
             paragraph(
-              'Pray the prayer 15 times each day, from November 30 until Christmas. Where the prayer says "[name your intention]", ask for the grace you are seeking.',
+              'Pray the prayer 15 times each day, from November 30 until Christmas. Where the prayer says "[name your intention]", ask for the grace you are seeking. In this app, you can tap it to type your intention, which is saved only on this device.',
             ),
             paragraph(
               'The 15 prayers don\'t have to be said all at once: many people spread them throughout the day. If you miss a day, simply pick up again the next day.',

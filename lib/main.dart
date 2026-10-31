@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/aboutPage.dart';
 import 'package:st_andrew_novena/appTheme.dart';
+import 'package:st_andrew_novena/intentionSheet.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 import 'package:st_andrew_novena/prayerBeads.dart';
 import 'package:st_andrew_novena/settingsPage.dart';
@@ -107,6 +108,7 @@ class ScreenNavigator {
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _counter = 0;
+  String _intention = '';
 
   @override
   void initState() {
@@ -129,6 +131,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _startup() async {
+    // first, so a slow or failed notification setup can't hide it
+    await _initializeIntention();
     await getIt<NotificationService>().initialize();
     await _initializeCounter();
     await getIt<NotificationService>().syncNotifications();
@@ -160,6 +164,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     } else {
       setState(() {
         _counter = counter;
+      });
+    }
+  }
+
+  Future<void> _initializeIntention() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _intention = prefs.getString('intention') ?? '';
+    });
+  }
+
+  Future<void> _editIntention() async {
+    final intention = await showIntentionSheet(context, _intention);
+    // null when the sheet was dismissed without saving
+    if (intention != null && mounted) {
+      setState(() {
+        _intention = intention;
       });
     }
   }
@@ -206,6 +228,68 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     await _resetCounter();
     // prayers are no longer complete, so reminders resume today
     await getIt<NotificationService>().syncNotifications();
+  }
+
+  /// The intention in the prayer, tapped to edit it: underlined like a link
+  /// rather than drawn as a button, so it reads as part of the prayer.
+  Widget _buildIntention(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.extension<NovenaText>()!.intention;
+    final muted = theme.extension<NovenaColors>()!.gold.withValues(alpha: 0.6);
+    final intention = _intention.trim();
+    final iconSize = MediaQuery.textScalerOf(context).scale(style.fontSize!);
+
+    return Semantics(
+      button: true,
+      label: intention.isEmpty
+          ? 'Prayer intention, not set'
+          : 'Prayer intention: $intention',
+      onTap: _editIntention,
+      onTapHint: 'edit',
+      excludeSemantics: true,
+      // the gradient behind the prayer would hide ripples on the Scaffold
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: _editIntention,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: intention.isEmpty
+                        ? '[name your intention]'
+                        : intention,
+                    style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      decorationStyle: TextDecorationStyle.dotted,
+                      decorationColor: muted,
+                    ),
+                  ),
+                  // in the text, so it wraps with the last word
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: iconSize * 0.8,
+                        color: muted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // the theme's style itself, not a copy built on every build
+              style: style,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -282,11 +366,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           style: textTheme.bodyLarge,
                           textAlign: TextAlign.center,
                         ),
-                        Text(
-                          '[name your intention]',
-                          style: theme.extension<NovenaText>()!.intention,
-                          textAlign: TextAlign.center,
-                        ),
+                        _buildIntention(context),
                         Text(
                           'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
                           style: textTheme.bodyLarge,
