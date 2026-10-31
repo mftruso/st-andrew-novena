@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:st_andrew_novena/appTheme.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 
 import 'main.dart'; // need for getIt
@@ -88,38 +89,41 @@ class _SettingPagesState extends State<SettingsPage> {
         ),
       ),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: maxContentWidth),
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
 
-          // We use [Builder] here to use a [context] that is a descendant of [Scaffold] for showToast to work
-          child: Builder(
-            builder: (context) => Column(
-              children: <Widget>[
-                ListTile(
-                  title: Text('Notifications'),
-                  trailing: Switch(
-                    value: _notificationsEnabled,
-                    onChanged: (value) async {
-                      setState(() {
-                        _notificationsEnabled = value;
-                      });
-                      // enabling is confirmed once permission is answered
-                      if (!value) {
-                        _showToast(context, value);
-                      }
-                      await _storeNotificationPreferences(value);
-                    },
+            // We use [Builder] here to use a [context] that is a descendant of [Scaffold] for showToast to work
+            child: Builder(
+              builder: (context) => Column(
+                children: <Widget>[
+                  ListTile(
+                    title: Text('Notifications'),
+                    trailing: Switch(
+                      value: _notificationsEnabled,
+                      onChanged: (value) async {
+                        setState(() {
+                          _notificationsEnabled = value;
+                        });
+                        // enabling is confirmed once permission is answered
+                        if (!value) {
+                          _showToast(context, value);
+                        }
+                        await _storeNotificationPreferences(value);
+                      },
+                    ),
                   ),
-                ),
-                ListTile(
-                  dense: true,
-                  title: Text(
-                    'Enables hourly notifications until the prayer is completed 15 times daily. Notifications resume at 7 a.m. each day.',
-                    style: Theme.of(context).textTheme.bodyLarge
-                        ?.copyWith(fontSize: 18, height: 1.4),
+                  ListTile(
+                    dense: true,
+                    title: Text(
+                      'Enables hourly notifications until the prayer is completed 15 times daily. Notifications resume at 7 a.m. each day.',
+                      style: Theme.of(context).textTheme.bodyLarge
+                          ?.copyWith(fontSize: 18, height: 1.4),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

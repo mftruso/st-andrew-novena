@@ -13,6 +13,7 @@ import 'package:get_it/get_it.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:st_andrew_novena/aboutPage.dart';
+import 'package:st_andrew_novena/appTheme.dart';
 import 'package:st_andrew_novena/notificationService.dart';
 import 'package:st_andrew_novena/prayerBeads.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -437,11 +438,13 @@ void main() {
   });
 
   // phone-sized surfaces, including a landscape iPhone, where the fixed parts
-  // of the layout have the least room
+  // of the layout have the least room, and tablets, where it has the most
   const screens = {
     'small Android portrait': Size(360, 640),
     'iPhone portrait': Size(390, 844),
     'iPhone landscape': Size(844, 390),
+    'tablet portrait': Size(800, 1280),
+    'tablet landscape': Size(1280, 800),
   };
   // the placeholder, and the longest intention the sheet allows
   final intentions = {
@@ -549,6 +552,69 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(identical(intention(), before), isTrue);
+  });
+
+  for (final MapEntry(key: name, value: size) in {
+    'tablet portrait': const Size(800, 1280),
+    'tablet landscape': const Size(1280, 800),
+  }.entries) {
+    testWidgets('the prayer and Amen stay readable width on a $name', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = size * 2;
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MyApp());
+      await tester.pumpAndSettle();
+
+      for (final finder in [
+        find.textContaining('Hail and'),
+        find.byType(FilledButton),
+      ]) {
+        final rect = tester.getRect(finder);
+        expect(rect.width, lessThanOrEqualTo(maxContentWidth));
+        expect(rect.center.dx, moreOrLessEquals(size.width / 2));
+      }
+    });
+  }
+
+  testWidgets('the prayer is centred between the app bar and Amen', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1280) * 2;
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+
+    // the gaps beyond the fixed padding (36 above the ring, 16 below the
+    // prayer) are split evenly
+    final above =
+        tester.getRect(find.byType(PrayerBeads)).top -
+        tester.getRect(find.byType(AppBar)).bottom -
+        36;
+    final below =
+        tester.getRect(find.byType(FilledButton)).top -
+        tester.getRect(find.textContaining('through the merits')).bottom -
+        16;
+    expect(above, greaterThan(100));
+    expect(above, moreOrLessEquals(below, epsilon: 1));
+  });
+
+  testWidgets('the about page text stays readable width on a tablet', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800) * 2;
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(home: AboutPage()));
+    await tester.pumpAndSettle();
+
+    final rect = tester.getRect(find.text('How to Pray It'));
+    final paragraph = tester.getRect(find.textContaining('Pray the prayer 15'));
+    expect(paragraph.width, lessThanOrEqualTo(maxContentWidth));
+    expect(paragraph.center.dx, moreOrLessEquals(640));
+    expect(rect.left, paragraph.left);
   });
 
   testWidgets('the prayer bounces on Android instead of stretching', (
@@ -771,9 +837,8 @@ void main() {
       WidgetTester tester,
     ) async {
       // notification setup that never finishes, like a slow or failed init
-      when(
-        mockNotificationService.initialize(),
-      ).thenAnswer((_) => Completer<void>().future);
+      when(mockNotificationService.initialize())
+          .thenAnswer((_) => Completer<void>().future);
       await pumpWithIntention(tester, 'for my mother');
 
       expect(find.textContaining('for my mother'), findsOneWidget);
@@ -783,12 +848,13 @@ void main() {
     testWidgets('saving before notifications initialize keeps the intention', (
       WidgetTester tester,
     ) async {
-      when(
-        mockNotificationService.initialize(),
-      ).thenAnswer((_) => Completer<void>().future);
+      when(mockNotificationService.initialize())
+          .thenAnswer((_) => Completer<void>().future);
       final prefs = await pumpWithIntention(tester, 'for my mother');
 
       // whatever the intention shows, the sheet opens with the saved one
+      await tester.ensureVisible(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.edit_outlined));
       await tester.pumpAndSettle();
       expect(find.text('Your intention'), findsOneWidget);
