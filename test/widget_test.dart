@@ -443,33 +443,45 @@ void main() {
     'iPhone portrait': Size(390, 844),
     'iPhone landscape': Size(844, 390),
   };
+  // the placeholder, and the longest intention the sheet allows
+  final intentions = {
+    'no intention': null,
+    'a long intention': ('for my family and friends ' * 8).substring(0, 200),
+  };
   for (final MapEntry(key: name, value: size) in screens.entries) {
     for (final scale in [1.0, 2.0, 3.0]) {
-      testWidgets('lays out without overflow: $name at ${scale}x text', (
-        WidgetTester tester,
-      ) async {
-        tester.view.physicalSize = size * 3;
-        tester.view.devicePixelRatio = 3;
-        tester.platformDispatcher.textScaleFactorTestValue = scale;
-        addTearDown(tester.view.reset);
-        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-        SharedPreferences.setMockInitialValues({
-          'counter': 15,
-          'last_updated': DateTime.now().toString(),
-        });
-        await tester.pumpWidget(MyApp());
-        await tester.pumpAndSettle();
+      for (final MapEntry(key: variant, value: intention)
+          in intentions.entries) {
+        testWidgets(
+          'lays out without overflow: $name at ${scale}x text, $variant',
+          (WidgetTester tester) async {
+            tester.view.physicalSize = size * 3;
+            tester.view.devicePixelRatio = 3;
+            tester.platformDispatcher.textScaleFactorTestValue = scale;
+            addTearDown(tester.view.reset);
+            addTearDown(
+              tester.platformDispatcher.clearTextScaleFactorTestValue,
+            );
+            SharedPreferences.setMockInitialValues({
+              'counter': 15,
+              'last_updated': DateTime.now().toString(),
+              if (intention != null) 'intention': intention,
+            });
+            await tester.pumpWidget(MyApp());
+            await tester.pumpAndSettle();
 
-        // a RenderFlex overflow would fail the test with an exception
-        expect(tester.takeException(), isNull);
-        // the Amen button is fully on screen and tappable without scrolling
-        final button = tester.getRect(find.byType(FilledButton));
-        expect(button.top, greaterThanOrEqualTo(0));
-        expect(button.bottom, lessThanOrEqualTo(size.height));
-        await tester.tap(find.text('Amen'));
-        await tester.pumpAndSettle();
-        expect(find.text('16'), findsOneWidget);
-      });
+            // a RenderFlex overflow would fail the test with an exception
+            expect(tester.takeException(), isNull);
+            // the Amen button is fully on screen and tappable without scrolling
+            final button = tester.getRect(find.byType(FilledButton));
+            expect(button.top, greaterThanOrEqualTo(0));
+            expect(button.bottom, lessThanOrEqualTo(size.height));
+            await tester.tap(find.text('Amen'));
+            await tester.pumpAndSettle();
+            expect(find.text('16'), findsOneWidget);
+          },
+        );
+      }
     }
   }
 
@@ -527,8 +539,9 @@ void main() {
   ) async {
     await tester.pumpWidget(MyApp());
     await tester.pumpAndSettle();
-    TextStyle intention() =>
-        tester.widget<Text>(find.text('[name your intention]')).style!;
+    TextStyle intention() => tester
+        .widget<Text>(find.textContaining('[name your intention]'))
+        .style!;
     final before = intention();
     expect(before.fontStyle, FontStyle.italic);
 
@@ -552,4 +565,180 @@ void main() {
     expect(find.byType(StretchingOverscrollIndicator), findsNothing);
     expect(find.byType(GlowingOverscrollIndicator), findsNothing);
   }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+  group('prayer intention', () {
+    Future<SharedPreferences> pumpWithIntention(
+      WidgetTester tester,
+      String? intention,
+    ) async {
+      SharedPreferences.setMockInitialValues({
+        if (intention != null) 'intention': intention,
+      });
+      await tester.pumpWidget(MyApp());
+      await tester.pumpAndSettle();
+      return SharedPreferences.getInstance();
+    }
+
+    const placeholder = '[name your intention]';
+
+    Future<void> openSheet(WidgetTester tester, String text) async {
+      // scrolled into view first, for large text on small screens
+      await tester.ensureVisible(find.textContaining(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining(text));
+      await tester.pumpAndSettle();
+      expect(find.text('Your intention'), findsOneWidget);
+    }
+
+    testWidgets('a saved intention replaces the placeholder', (
+      WidgetTester tester,
+    ) async {
+      await pumpWithIntention(tester, 'for my mother');
+
+      expect(find.textContaining('for my mother'), findsOneWidget);
+      expect(find.textContaining(placeholder), findsNothing);
+    });
+
+    testWidgets('a blank intention shows the placeholder', (
+      WidgetTester tester,
+    ) async {
+      await pumpWithIntention(tester, '   ');
+
+      expect(find.textContaining(placeholder), findsOneWidget);
+    });
+
+    testWidgets('typing an intention and saving shows and stores it', (
+      WidgetTester tester,
+    ) async {
+      final prefs = await pumpWithIntention(tester, null);
+
+      await openSheet(tester, placeholder);
+      expect(find.text('Clear'), findsNothing);
+      await tester.enterText(find.byType(TextField), 'for my mother');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your intention'), findsNothing);
+      expect(find.textContaining('for my mother'), findsOneWidget);
+      expect(find.textContaining(placeholder), findsNothing);
+      expect(prefs.getString('intention'), 'for my mother');
+    });
+
+    testWidgets('cancelling the sheet changes nothing', (
+      WidgetTester tester,
+    ) async {
+      final prefs = await pumpWithIntention(tester, 'for my mother');
+
+      await openSheet(tester, 'for my mother');
+      await tester.enterText(find.byType(TextField), 'for my father');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your intention'), findsNothing);
+      expect(find.textContaining('for my mother'), findsOneWidget);
+      expect(prefs.getString('intention'), 'for my mother');
+    });
+
+    testWidgets('tapping outside the sheet changes nothing', (
+      WidgetTester tester,
+    ) async {
+      final prefs = await pumpWithIntention(tester, null);
+
+      await openSheet(tester, placeholder);
+      await tester.enterText(find.byType(TextField), 'for my father');
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your intention'), findsNothing);
+      expect(find.textContaining(placeholder), findsOneWidget);
+      expect(prefs.containsKey('intention'), isFalse);
+    });
+
+    testWidgets('clearing the intention restores the placeholder', (
+      WidgetTester tester,
+    ) async {
+      final prefs = await pumpWithIntention(tester, 'for my mother');
+
+      await openSheet(tester, 'for my mother');
+      await tester.tap(find.text('Clear'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your intention'), findsNothing);
+      expect(find.textContaining(placeholder), findsOneWidget);
+      expect(prefs.getString('intention') ?? '', isEmpty);
+    });
+
+    testWidgets('the intention is announced as a button to edit it', (
+      WidgetTester tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await pumpWithIntention(tester, 'for my mother');
+
+      final finder = find.bySemanticsLabel('Prayer intention: for my mother');
+      expect(finder, findsOneWidget);
+      expect(
+        tester.getSemantics(finder),
+        matchesSemantics(
+          label: 'Prayer intention: for my mother',
+          isButton: true,
+          hasTapAction: true,
+          onTapHint: 'edit',
+        ),
+      );
+      // the text itself isn't announced again
+      expect(find.bySemanticsLabel('for my mother'), findsNothing);
+      semantics.dispose();
+    });
+
+    testWidgets('an unset intention is announced as not set', (
+      WidgetTester tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await pumpWithIntention(tester, null);
+
+      expect(
+        find.bySemanticsLabel('Prayer intention, not set'),
+        findsOneWidget,
+      );
+      semantics.dispose();
+    });
+
+    for (final scale in [1.0, 3.0]) {
+      testWidgets('the sheet lays out above the keyboard at ${scale}x text', (
+        WidgetTester tester,
+      ) async {
+        tester.view.physicalSize = const Size(360, 640) * 3;
+        tester.view.devicePixelRatio = 3;
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        addTearDown(tester.view.reset);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        // set, so the sheet shows all three actions
+        await pumpWithIntention(tester, 'for my mother');
+
+        await openSheet(tester, 'for my mother');
+        // a keyboard taking up almost half the screen
+        tester.view.viewInsets = const FakeViewPadding(bottom: 300 * 3);
+        await tester.pumpAndSettle();
+        // the longest intention, filling the field's four lines
+        await tester.enterText(find.byType(TextField), 'a ' * 100);
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('Your intention'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.text('Save'),
+          100,
+          scrollable: find
+              .descendant(
+                of: find.byType(BottomSheet),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        final save = tester.getRect(find.text('Save'));
+        expect(save.bottom, lessThanOrEqualTo(640 - 300));
+        expect(tester.takeException(), isNull);
+      });
+    }
+  });
 }
