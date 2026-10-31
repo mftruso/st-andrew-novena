@@ -7,6 +7,10 @@ const _navy = Color(0xFF1F2B47);
 const _warmGold = Color(0xFFE9D3A0);
 const _ivory = Color(0xFFF5F1E8);
 
+/// Widest a page's content gets, padding included, so lines of text stay
+/// readable on tablets. Wider than any phone in portrait.
+const maxContentWidth = 600.0;
+
 /// Colors the ColorScheme has no slot for.
 class NovenaColors extends ThemeExtension<NovenaColors> {
   const NovenaColors({
