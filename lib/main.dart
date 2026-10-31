@@ -131,9 +131,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _startup() async {
+    // first, so a slow or failed notification setup can't hide it
+    await _initializeIntention();
     await getIt<NotificationService>().initialize();
     await _initializeCounter();
-    await _initializeIntention();
     await getIt<NotificationService>().syncNotifications();
   }
 
@@ -169,6 +170,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Future<void> _initializeIntention() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _intention = prefs.getString('intention') ?? '';
     });
@@ -177,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Future<void> _editIntention() async {
     final intention = await showIntentionSheet(context, _intention);
     // null when the sheet was dismissed without saving
-    if (intention != null) {
+    if (intention != null && mounted) {
       setState(() {
         _intention = intention;
       });

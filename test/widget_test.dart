@@ -740,5 +740,99 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+
+    testWidgets('double-tapping Save closes only the sheet', (
+      WidgetTester tester,
+    ) async {
+      final prefs = await pumpWithIntention(tester, null);
+
+      await openSheet(tester, placeholder);
+      await tester.enterText(find.byType(TextField), 'for my mother');
+      // both taps land before the first save finishes, as when a device's
+      // prefs write is slow (tester.tap would let the in-memory save finish)
+      final save = tester.getCenter(find.text('Save'));
+      for (final pointer in [1, 2]) {
+        tester.binding.handlePointerEvent(
+          PointerDownEvent(pointer: pointer, position: save),
+        );
+        tester.binding.handlePointerEvent(
+          PointerUpEvent(pointer: pointer, position: save),
+        );
+      }
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your intention'), findsNothing);
+      expect(find.text('Amen'), findsOneWidget);
+      expect(find.textContaining('for my mother'), findsOneWidget);
+      expect(prefs.getString('intention'), 'for my mother');
+    });
+
+    testWidgets('a saved intention shows while notifications initialize', (
+      WidgetTester tester,
+    ) async {
+      // notification setup that never finishes, like a slow or failed init
+      when(
+        mockNotificationService.initialize(),
+      ).thenAnswer((_) => Completer<void>().future);
+      await pumpWithIntention(tester, 'for my mother');
+
+      expect(find.textContaining('for my mother'), findsOneWidget);
+      expect(find.textContaining(placeholder), findsNothing);
+    });
+
+    testWidgets('saving before notifications initialize keeps the intention', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockNotificationService.initialize(),
+      ).thenAnswer((_) => Completer<void>().future);
+      final prefs = await pumpWithIntention(tester, 'for my mother');
+
+      // whatever the intention shows, the sheet opens with the saved one
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('Your intention'), findsOneWidget);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, 'for my mother');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(prefs.getString('intention'), 'for my mother');
+    });
+
+    testWidgets('saving a blank intention reopens the sheet empty', (
+      WidgetTester tester,
+    ) async {
+      final prefs = await pumpWithIntention(tester, 'for my mother');
+
+      await openSheet(tester, 'for my mother');
+      await tester.enterText(find.byType(TextField), '   ');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(prefs.containsKey('intention'), isFalse);
+
+      // the same as after a restart, which loads nothing
+      await openSheet(tester, placeholder);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, isEmpty);
+    });
+
+    testWidgets('the intention stays on one line in the prayer', (
+      WidgetTester tester,
+    ) async {
+      final prefs = await pumpWithIntention(tester, null);
+
+      await openSheet(tester, placeholder);
+      await tester.enterText(
+        find.byType(TextField),
+        'for my mother\n\n\nand father',
+      );
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(prefs.getString('intention'), isNot(contains('\n')));
+      final shown = tester.widget<Text>(find.textContaining('for my mother'));
+      expect(shown.textSpan!.toPlainText(), isNot(contains('\n')));
+    });
   });
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,25 +27,40 @@ class _IntentionSheetState extends State<IntentionSheet> {
     text: widget.current,
   );
 
+  // the sheet stays mounted while it animates closed, so without this a
+  // second tap would pop the home page beneath it
+  bool _closing = false;
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
+  void _cancel() {
+    if (_closing) return;
+    _closing = true;
+    Navigator.pop(context);
+  }
+
   Future<void> _save() async {
+    if (_closing) return;
+    _closing = true;
     final intention = _controller.text;
     final prefs = await SharedPreferences.getInstance();
     // stored as typed; blank means unset
     if (intention.trim().isEmpty) {
       await prefs.remove('intention');
+      if (mounted) Navigator.pop(context, '');
     } else {
       await prefs.setString('intention', intention);
+      if (mounted) Navigator.pop(context, intention);
     }
-    if (mounted) Navigator.pop(context, intention);
   }
 
   Future<void> _clear() async {
+    if (_closing) return;
+    _closing = true;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('intention');
     if (mounted) Navigator.pop(context, '');
@@ -72,6 +88,12 @@ class _IntentionSheetState extends State<IntentionSheet> {
                 minLines: 1,
                 maxLines: 4,
                 maxLength: 200,
+                // wraps, but stays one line in the prayer
+                keyboardType: TextInputType.text,
+                textInputAction: TextInputAction.done,
+                inputFormatters: [
+                  FilteringTextInputFormatter.singleLineFormatter,
+                ],
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   hintText: 'e.g. for my family\'s health',
@@ -87,10 +109,7 @@ class _IntentionSheetState extends State<IntentionSheet> {
                 overflowAlignment: OverflowBarAlignment.end,
                 spacing: 8,
                 children: <Widget>[
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
+                  TextButton(onPressed: _cancel, child: const Text('Cancel')),
                   if (widget.current.trim().isNotEmpty)
                     TextButton(onPressed: _clear, child: const Text('Clear')),
                   // the theme's FilledButton is the full-width Amen button
