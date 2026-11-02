@@ -336,51 +336,76 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Column(
-              children: <Widget>[
-                // everything but the Amen button scrolls, so the layout fits
-                // short screens (landscape, large text)
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.only(top: 36, bottom: 16),
-                    child: Column(
-                      children: [
-                        PrayerBeads(count: _counter),
-                        // always laid out, so the prayer doesn't move when
-                        // the badge appears
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: AnimatedOpacity(
-                            opacity: complete ? 1 : 0,
-                            duration: const Duration(milliseconds: 400),
-                            child: ExcludeSemantics(
-                              excluding: !complete,
-                              child: const CompletedBadge(),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: maxContentWidth),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Column(
+                  children: <Widget>[
+                    // everything but the Amen button scrolls, so the layout fits
+                    // short screens (landscape, large text)
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) => SingleChildScrollView(
+                          child: ConstrainedBox(
+                            // centred vertically when it fits, so tall screens
+                            // don't leave a gap above the Amen button
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: 36,
+                                bottom: 16,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  PrayerBeads(count: _counter),
+                                  // always laid out, so the prayer doesn't move when
+                                  // the badge appears
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    child: AnimatedOpacity(
+                                      opacity: complete ? 1 : 0,
+                                      duration: const Duration(
+                                        milliseconds: 400,
+                                      ),
+                                      child: ExcludeSemantics(
+                                        excluding: !complete,
+                                        child: const CompletedBadge(),
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
+                                    style: textTheme.bodyLarge,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  _buildIntention(context),
+                                  Text(
+                                    'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
+                                    style: textTheme.bodyLarge,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        Text(
-                          'Hail and blessed be the hour and moment in which the Son of God was born of the most pure Virgin Mary, at midnight, in Bethlehem, in the piercing cold.\n\nIn that hour, vouchsafe, O my God! to hear my prayer and grant my desire',
-                          style: textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        _buildIntention(context),
-                        Text(
-                          'through the merits of Our Saviour Jesus Christ, and of His Blessed Mother.',
-                          style: textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    FilledButton(
+                      onPressed: _incrementCounter,
+                      child: const Text('Amen'),
+                    ),
+                  ],
                 ),
-                FilledButton(
-                  onPressed: _incrementCounter,
-                  child: const Text('Amen'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
